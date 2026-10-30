@@ -1,57 +1,39 @@
-# {{PROJECT_NAME}} Project Specifications
-
-<!--
-  This is the AI's primary source of truth for WHAT the project is.
-  - Existing repo: run `/bootstrap existing`, it fills this file from the code.
-  - New project: put the task descriptions in context/project-spec.md (template next to it)
-    or point to them, run `/specs overview`, review, then `/specs split` for the spec files.
-  Keep it current as the product evolves.
--->
+# Mini Wine Cellar Project Specifications
 
 ## Problem (Core Idea)
 
-<!-- The pain being solved, in a few sentences. -->
-
 ## Users
-
-<!-- Personas and what each needs. -->
 
 ## Core Features
 
-<!-- Grouped feature list. Enough detail that the AI can scope work from it. -->
-
 ## Data Model (rough draft)
-
-<!-- Entities + key fields. A rough Prisma/schema sketch is fine; note it will evolve. -->
 
 ## Tech Stack
 
-<!-- Framework, language, DB/ORM, auth, storage, styling, AI, deployment. -->
+npm workspaces monorepo (npm 10, Node 24). "Planned" items arrive with spec 1 and are not installed yet.
+
+| Area | Now | Planned (spec 1) |
+| --- | --- | --- |
+| Web (`apps/web`) | Next.js 16.4 App Router, React 19.3, Tailwind CSS 4.3, TypeScript 5.9, port 3000 | Zod + react-hook-form for forms; calls the API through `NEXT_PUBLIC_API_URL` |
+| API (`apps/api`) | NestJS 12.3 on Express 5, TypeScript 6.0 | Port 4000, GraphQL at `/graphql` (driver TODO), CORS for `http://localhost:3000`, class-validator + global `ValidationPipe` |
+| Shared (`packages/shared`) | `packages/*` declared, empty | Shared validation limits used by both apps |
+| Database / ORM | none | PostgreSQL via docker-compose, MikroORM with migrations |
+| Auth | none | Fake: `x-user-id` header checked by a Nest guard (details in this overview, TODO) |
+| Lint / format | Biome 2.4 (web); oxlint + Prettier (api) | One Biome at the root for all workspaces, `noExplicitAny: error`; oxlint and Prettier removed |
+| Tests | Jest 30 + ts-jest + supertest (api); none (web) | Jest via `next/jest` in web |
+| Root scripts | none (`test` is a failing placeholder) | `dev`, `test`, `lint`, `typecheck` via workspaces; typecheck runs each app's own TypeScript |
+| CI / deploy | none | TODO |
 
 ## Architecture Notes
 
-<!-- API shape, boundaries, key decisions and trade-offs. -->
-
 ## Monetization (if any)
-
-<!-- Plans, limits, gating. -->
 
 ## UI / UX
 
-<!-- Design direction, layout, responsive rules, references. -->
-
 ## Roadmap
-
-<!-- Ordered list of spec files in context/features/, one line each with dependencies. Maintained by `/specs split`. MVP first. -->
 
 ## Status
 
-<!-- Where the project currently is. -->
-
 ## Assumptions
 
-<!-- Simple defaults chosen by `/specs overview` where the source was silent. One line each, change any time. -->
-
 ## Open Questions
-
-<!-- Only blocking gaps (data model, extra spec, external service), each with a recommended option. Filled by `/specs overview`. -->

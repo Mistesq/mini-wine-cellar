@@ -7,21 +7,20 @@
 - Ask before large refactors or architectural changes
 - Don't add features not in the project spec
 - Never delete files without clarification
-- I may write prompts in Ukrainian or Russian. Reply in the language I wrote in.
-- Everything written to files is in English: code, comments, specs, context files, current-feature.md, commit messages, README.
+- Language rules: see Language in @context/coding-standards.md
 
 ## Workflow
 
 This is the common workflow that we will use for every single feature/fix:
 
 1. **Document** - Document the feature in @context/current-feature.md.
-2. **Branch** - Create new branch for feature, fix, etc
+2. **Branch** - Create `spec/<n>-<name>` from `feat/wine-cellar`
 3. **Implement** - Implement the feature/fix that I create in @context/current-feature.md
 4. **Test** - Verify it works (browser for UI, curl or a test for APIs). Add/maintain unit tests for the logic you touch, see [Testing](#testing). Run the typecheck from CLAUDE.md and fix any errors. Run the build before `/feature complete`
 5. **Iterate** - Iterate and change things if needed
 6. **Commit** - Only after typecheck and tests pass and everything works
-7. **Merge** - Merge to main
-8. **Delete Branch** - Delete branch after merge
+7. **Merge** - `/feature complete` merges into `feat/wine-cellar` with `--no-ff` and pushes `feat/wine-cellar`. Never touch `main`
+8. **Delete Branch** - Delete the local spec branch after merge (spec branches are never pushed)
 9. **Review** - Review AI-generated code periodically and on demand.
 10. Mark as completed in @context/current-feature.md and add to history
 
@@ -29,7 +28,7 @@ Do NOT commit without permission and until typecheck and tests pass. If they fai
 
 ## Branching
 
-We will create a new branch for every feature/fix. Name branch **feature/[feature]** or **fix[fix]**, etc. Ask to delete the branch once merged.
+Every spec gets its own branch from `feat/wine-cellar`, named **spec/<n>-<name>** (e.g. `spec/2-api-data`). Full rules: Git workflow in @context/coding-standards.md.
 
 ## Commits
 
@@ -57,15 +56,19 @@ We will create a new branch for every feature/fix. Name branch **feature/[featur
 
 <!-- /bootstrap adapts this section to the real test runner, config and mocking style. -->
 
-Default: [Vitest](https://vitest.dev), Node environment.
+**api (`apps/api`)**: Jest 30 + ts-jest, Node environment. Config: `apps/api/jest.config.ts` (unit) and `apps/api/test/jest-e2e.json` (e2e).
 
-- **Scope: business logic and utilities.** Services, server actions, validation schemas, pure helpers. No component/UI tests unless asked.
-- Co-locate tests next to the code as `*.test.ts`.
-- Keep tests true units: **no real database, network, or auth**. Mock collaborators with `vi.mock(...)`; define mock objects with `vi.hoisted()` so the hoisted `vi.mock` factory can reference them.
+- **Scope: business logic and utilities.** Services, validation, pure helpers. Resolvers only for input mapping and error translation.
+- Unit tests sit next to the code as `*.spec.ts` under `src/`. e2e tests go in `test/*.e2e-spec.ts` and use supertest against the Nest app.
+- Keep unit tests true units: **no real database, network or auth**. Build the unit with `Test.createTestingModule(...)` from `@nestjs/testing` and replace collaborators with `{ provide: X, useValue: mock }`. Use `jest.fn()` / `jest.mock(...)` for modules.
 - Cover the happy path plus the expected failures (invalid input, not found, conflict, unauthorized).
-- Import test helpers explicitly from `vitest` (no globals).
+- Jest globals (`describe`, `it`, `expect`) are enabled through `types: ["jest"]` in `tsconfig.json`, so no imports are needed.
 
-Run the tests and the typecheck before committing.
+**web (`apps/web`)**: Jest via `next/jest` (added in spec 1; the brief requires Jest, so not Vitest). Scope: helpers, Zod schemas, form logic. Co-located `*.test.ts`. No component/UI tests unless asked. Until spec 1 lands there is no runner.
+
+**Shared (`packages/shared`)**: test the validation limits wherever spec 1 wires Jest for it.
+
+Run the tests (`npm test -w api` now; root `npm test` after spec 1) and both typechecks before committing.
 
 ## Code Review
 
