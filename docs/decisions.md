@@ -79,3 +79,33 @@ Non-obvious decisions, in the order they were made. Format and rules: Decisions 
 - Decision: `postgres:18-alpine`, with the named volume mounted at `/var/lib/postgresql`.
 - Alternatives: 19 (only release candidates on Docker Hub); 17 (older, no benefit here).
 - Why: 18 is the newest stable major and MikroORM 7.2 talks to it through `pg` 8. From 18 on the image stores data in a versioned subfolder, so mounting the old `/var/lib/postgresql/data` path would not persist data.
+
+## D-14: MikroORM entities use legacy decorators with reflect-metadata
+- Context: MikroORM offers decorators (legacy or ES spec) and decorator-free `defineEntity` / `EntitySchema` definitions, and the metadata provider has to match.
+- Decision: legacy decorators from `@mikro-orm/core` with `ReflectMetadataProvider`. Nullable and union properties declare an explicit `type`, as reflection cannot see them.
+- Alternatives: `defineEntity` (types inferred, no metadata provider, no decorators); `TsMorphMetadataProvider` (reads types from source, slower start, needs `@mikro-orm/reflection`).
+- Why: Nest already runs with `experimentalDecorators` and `emitDecoratorMetadata`, so decorated entities match the rest of the api and spec 3's decorated GraphQL types.
+
+## D-15: The api stays on CommonJS majors: Nest 11 and MikroORM 6
+- Context: spec 2 installed MikroORM 7, then found that MikroORM 7 and Nest 12 (with `@nestjs/graphql` / `@nestjs/apollo` 14) are ESM-only. The CJS app loads them through Node's `require(esm)`, but Jest 30 does that only on Node 24.9+ with `--experimental-vm-modules`, and `jest.mock` does not apply to ESM modules there.
+- Decision: `apps/api` uses the latest CommonJS majors: Nest 11.2 (common, core, platform-express, testing, cli, schematics) and MikroORM 6.6. The MikroORM CLI loads the TS config through the existing ts-node; no extra TS loader. D-13 stays: MikroORM 6.6 also talks to Postgres 18 through `pg` 8.
+- Alternatives: keep Nest 12 / MikroORM 7, run Jest with `--experimental-vm-modules` and raise `engines` to 24 (tests built on `jest.unstable_mockModule`); transpile the ESM packages in Jest via `transformIgnorePatterns` (slow, breaks with each new ESM dependency); move the api to ESM.
+- Why: plain `jest.mock` unit tests and Node 22 support on the reviewer's machine matter more here than the newest majors, and spec 3's GraphQL packages are CJS only on Nest 11.
+
+## D-16: Node engines recalculated after the Nest 11 downgrade
+- Context: D-12 derived `^22.22.3 || ^24.15.0 || >=26.0.0` from Nest CLI 12 (`@angular-devkit/*` 22) and `file-type` 22. After D-15 neither is in the tree.
+- Decision: the D-12 rule is kept (the strictest range across the lockfile, platform-specific binaries excluded), which now gives `^22.13.0 || >=24.0.0`: `@napi-rs/wasm-runtime` sets 22.13 and Jest 30 excludes 23. `@types/node` stays on 22. This replaces the value in D-12, not its reasoning.
+- Alternatives: keep the old, stricter range (no package needs it any more); `>=22.13` (wrongly allows 23).
+- Why: `engines` should state the real minimum, and a stricter one would turn away Node 22 users for no reason.
+
+## D-17: The myBottles index is ascending
+- Context: `myBottles` orders by `created_at DESC, id DESC`, and MikroORM 6 cannot declare per-column sort order on an index without a raw SQL expression.
+- Decision: a plain B-tree index on `(owner_id, created_at, id)`. Postgres scans it backwards (`Index Scan Backward`, no Sort node, checked with `EXPLAIN` on 20k rows).
+- Alternatives: an expression index with `DESC` columns (raw SQL that the schema diff compares only by name).
+- Why: a backward scan serves the same order, and the index stays declarative and fully diffed by `migration:check`.
+
+## D-18: DATABASE_URL falls back to the docker-compose defaults
+- Context: the run flow (`npm install` -> `docker compose up -d` -> migrate -> seed -> dev) has no "copy `.env.example`" step, and the repo ships no `.env`.
+- Decision: `mikro-orm.config.ts` loads `apps/api/.env` with `process.loadEnvFile` when it exists. Without `DATABASE_URL` it uses `postgresql://wine:wine@localhost:5432/wine_cellar`, the compose defaults, unless `NODE_ENV` is `production`: then the app and the CLI fail at start with "DATABASE_URL must be set when NODE_ENV is production". Shell env wins over `.env`.
+- Alternatives: always throw when `DATABASE_URL` is missing (adds a manual step to the local flow); always fall back (a production deploy would silently try localhost); `dotenv` (a new dependency for the same result).
+- Why: the documented local flow works with no extra step, the same way `PORT` falls back to 4000, while a misconfigured production deploy fails loudly instead of connecting to the wrong database.

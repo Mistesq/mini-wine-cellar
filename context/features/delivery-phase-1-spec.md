@@ -6,7 +6,7 @@ Spec 6 (`spec/6-delivery`). Makes the repo ready to hand over: a root README tha
 
 ## Requirements
 
-- Root `README.md`: what the app does, the stack, prerequisites ("Node 22.22.3+ or 24.15+ (`engines` `^22.22.3 || ^24.15.0 || >=26.0.0`, tested on 24)", npm 10, Docker), and the run flow `npm install` -> `docker compose up -d` -> `npm run db:migrate` -> `npm run db:seed` -> `npm run dev`, with the URLs (web 3000, GraphQL 4000/graphql).
+- Root `README.md`: what the app does, the stack, prerequisites ("Node 22.13+ or 24+ (`engines` `^22.13.0 || >=24.0.0`, tested on 24 and 26)", npm 10, Docker), and the run flow `npm install` -> `docker compose up -d` -> `npm run db:migrate` -> `npm run db:seed` -> `npm run dev`, with the URLs (web 3000, GraphQL 4000/graphql).
 - README sections for env files (copy the `.env.example` files), scripts (`lint`, `typecheck`, `test`, `build`, `codegen`, `db:*`), the fake login and how ownership is enforced, the project layout, and a link to `docs/decisions.md`.
 - README "How I worked": 2-3 paragraphs on what `.claude/` (skills, agents, settings) and `context/` (overview, specs, standards) hold, and how the work went: overview -> specs -> one `/feature` loop per spec (load, start, test, review, complete) -> code review and code-scanner before each merge.
 - `ANSWERS.md` at the root with the answers to the 5 written questions. The user provides the texts; do not write them. Linked from the README and `PR.md`.
@@ -29,7 +29,6 @@ Spec 6 (`spec/6-delivery`). Makes the repo ready to hand over: a root README tha
 - Take the screenshots with Playwright MCP (`browser_resize` to 375x812 and 1280x800) against the seeded app.
 - Ask the user for the `ANSWERS.md` texts at the start of the spec, so the PR is not blocked at the end.
 - The PR opens only after every spec is merged into `feat/wine-cellar` and pushed. Never merge into `main`, never force-push.
-- The PR body ends with the Claude Code attribution line.
 
 ## Testing
 
