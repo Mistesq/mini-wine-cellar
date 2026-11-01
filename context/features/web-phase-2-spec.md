@@ -14,6 +14,7 @@ Spec 5 (`spec/5-web-cellar`). Builds the cellar UI for the chosen user: the add-
 - `LikeButton`: `likeBottle` with `optimisticResponse` (`likesCount + 1`); Apollo rolls back on error and the card shows the error. No toggle, rapid clicks each count.
 - Layout: at 375px one column, form above the list, tap targets of at least 44px. At 1280px the form is in a side column and the list is a card grid.
 - Jest tests for `addBottleSchema`: a valid input, each field invalid, the vintage bounds, https only, trimming, empty photoUrl.
+- Remove the temporary `--passWithNoTests` from the web `test` script (added in spec 1), now that `addBottleSchema` has tests.
 
 ## Files to Create
 

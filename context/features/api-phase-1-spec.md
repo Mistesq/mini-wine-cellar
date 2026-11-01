@@ -14,6 +14,7 @@ Spec 2 (`spec/2-api-data`). Adds PostgreSQL access through MikroORM: User and Bo
 - `UsersService`: `findAll()` (ordered by name) and `findById(id)`. `BottlesService`: `findForOwner(ownerId)` ordered `createdAt DESC, id DESC`; `create(ownerId, data)` with the owner taken only from the argument; `like(ownerId, id)` with a single conditional atomic increment, throwing `NotFoundException` when no row matches.
 - Root scripts `db:migrate` and `db:seed` (plus `migration:create` in api) delegate to the MikroORM CLI.
 - Unit tests for `BottlesService` with a mocked `EntityManager`, no real database.
+- Remove the temporary `--passWithNoTests` from the api `test` script (added in spec 1), now that `BottlesService` has tests.
 
 ## Files to Create
 
