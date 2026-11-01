@@ -151,3 +151,15 @@ Non-obvious decisions, in the order they were made. Format and rules: Decisions 
 - Decision: `autoSchemaFile` is the cwd-relative `schema.gql` path unless `NODE_ENV` is `production`, where it is `true` (schema in memory). The generated file is excluded from Biome, which would otherwise reformat it after every start.
 - Alternatives: always write the file; generate it in a separate script.
 - Why: development keeps the committed file fresh for Codegen, and a production start never depends on a writable disk.
+
+## D-26: NEXT_PUBLIC_API_URL falls back to localhost outside production
+- Context: the run flow has no "copy `.env.example`" step (same as D-18), and Next inlines `NEXT_PUBLIC_*` at build time, so a missing value would ship `undefined` or a localhost url to the browser.
+- Decision: `resolveApiUrl` (`apps/web/src/lib/api-url.ts`) returns `NEXT_PUBLIC_API_URL`, else `http://localhost:4000/graphql` unless `NODE_ENV` is `production`, where it throws "NEXT_PUBLIC_API_URL must be set when NODE_ENV is production". It runs at module scope of `apollo-client.ts`, which `next build` evaluates while prerendering `/`, so a production build without the variable fails. The check is not in `next.config.ts`: `next typegen` (first step of `typecheck`) loads the config in the same `PHASE_PRODUCTION_BUILD` as `next build`, so it would break typecheck without an env file.
+- Alternatives: always fall back (a production build would silently point at localhost); always throw (adds a manual step to the local flow); a guard in `next.config.ts` (breaks typecheck).
+- Why: local dev runs right after clone, and a production bundle can never be built against localhost by accident.
+
+## D-27: A user switch resets the Apollo store from one listener
+- Context: the stored user can change from the header picker or from another tab (`storage` event), and the previous user's cached data must not survive the switch. Apollo's `clearStore` and `resetStore` both cancel in-flight requests and reset the mounted queries.
+- Decision: `current-user-store.ts` notifies its listeners only on a real change (never on hydration), and `Providers` subscribes once and calls `client.resetStore()`. `x-user-id` is read from `localStorage` in a `SetContextLink` at request time, so the client is never rebuilt.
+- Alternatives: `clearStore` in the picker's change handler (mounted queries stay reset with no refetch, and a switch in another tab is missed); recreate the client per user (loses the provider identity and remounts the tree).
+- Why: one place drops the old cache whichever way the user changed, and `resetStore` refetches the mounted queries with the new header.

@@ -25,4 +25,5 @@ Run everything from the repo root. `packages/shared` is built automatically (`pr
 - **Typecheck**: `npm run typecheck` (each workspace runs its own `tsc`; web runs `next typegen` first)
 - **Test**: `npm test` (Jest in every workspace; api `src/**/*.spec.ts`, web and shared `src/**/*.test.ts`)
 - **Test (one workspace)**: `npm test -w api` / `npm test -w web` / `npm test -w @mini-wine-cellar/shared`; watch: `npm run test:watch -w api`
+- **Codegen (web)**: `npm run codegen -w web` (reads `apps/api/schema.gql`, writes `apps/web/src/gql/`; rerun after the api schema changes)
 - **DB**: `docker compose up -d` (Postgres 18 on 5432), `docker compose ps` for health; MikroORM migrations come in spec 2
