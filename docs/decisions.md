@@ -103,3 +103,9 @@ Non-obvious decisions, in the order they were made. Format and rules: Decisions 
 - Decision: a plain B-tree index on `(owner_id, created_at, id)`. Postgres scans it backwards (`Index Scan Backward`, no Sort node, checked with `EXPLAIN` on 20k rows).
 - Alternatives: an expression index with `DESC` columns (raw SQL that the schema diff compares only by name).
 - Why: a backward scan serves the same order, and the index stays declarative and fully diffed by `migration:check`.
+
+## D-18: DATABASE_URL falls back to the docker-compose defaults
+- Context: the run flow (`npm install` -> `docker compose up -d` -> migrate -> seed -> dev) has no "copy `.env.example`" step, and the repo ships no `.env`.
+- Decision: `mikro-orm.config.ts` loads `apps/api/.env` with `process.loadEnvFile` when it exists. Without `DATABASE_URL` it uses `postgresql://wine:wine@localhost:5432/wine_cellar`, the compose defaults, unless `NODE_ENV` is `production`: then the app and the CLI fail at start with "DATABASE_URL must be set when NODE_ENV is production". Shell env wins over `.env`.
+- Alternatives: always throw when `DATABASE_URL` is missing (adds a manual step to the local flow); always fall back (a production deploy would silently try localhost); `dotenv` (a new dependency for the same result).
+- Why: the documented local flow works with no extra step, the same way `PORT` falls back to 4000, while a misconfigured production deploy fails loudly instead of connecting to the wrong database.
