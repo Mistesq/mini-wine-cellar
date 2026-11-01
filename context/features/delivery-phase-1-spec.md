@@ -29,7 +29,6 @@ Spec 6 (`spec/6-delivery`). Makes the repo ready to hand over: a root README tha
 - Take the screenshots with Playwright MCP (`browser_resize` to 375x812 and 1280x800) against the seeded app.
 - Ask the user for the `ANSWERS.md` texts at the start of the spec, so the PR is not blocked at the end.
 - The PR opens only after every spec is merged into `feat/wine-cellar` and pushed. Never merge into `main`, never force-push.
-- The PR body ends with the Claude Code attribution line.
 
 ## Testing
 
