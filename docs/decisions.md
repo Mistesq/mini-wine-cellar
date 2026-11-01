@@ -163,3 +163,9 @@ Non-obvious decisions, in the order they were made. Format and rules: Decisions 
 - Decision: `current-user-store.ts` notifies its listeners only on a real change (never on hydration), and `Providers` subscribes once and calls `client.resetStore()`. `x-user-id` is read from `localStorage` in a `SetContextLink` at request time, so the client is never rebuilt.
 - Alternatives: `clearStore` in the picker's change handler (mounted queries stay reset with no refetch, and a switch in another tab is missed); recreate the client per user (loses the provider identity and remounts the tree).
 - Why: one place drops the old cache whichever way the user changed, and `resetStore` refetches the mounted queries with the new header.
+
+## D-28: The add-bottle form mirrors the api's photo rules and shows server errors per field
+- Context: the api (D-24) accepts `photoUrl` only as `https://`, without `user:pass@`, at most 2048 chars, and returns `BAD_USER_INPUT` with `extensions.fields` (D-21). A form that is looser than the server would pass a value the server then rejects with no field to point at.
+- Decision: `addBottleSchema` checks the same three rules, plus two that `IsUrl` applies implicitly: an explicit `https://` prefix (the URL parser also accepts `https:example.com`) and a hostname with a dot (`require_tld`, so `https://localhost/...` fails before submit). It does not copy the full FQDN rules (numeric or one-letter TLDs, bare IPv6 hosts). Any server `BAD_USER_INPUT` with `fields` still goes through `getServerFieldErrors` into react-hook-form `setError`, so whatever only the server catches shows under its field; the inline alert is only for errors without `fields` and for network failures.
+- Alternatives: https only as the spec wrote it (credentials and length errors land in the alert); one alert for every server error.
+- Why: the user sees each problem next to the field that caused it, whichever side caught it.
