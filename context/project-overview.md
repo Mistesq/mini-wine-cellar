@@ -39,7 +39,7 @@ E. **Ownership.** Every bottle query and mutation is scoped to the user from the
 
 ## Tech Stack
 
-npm workspaces monorepo (npm 10, Node `^22.13.0 || >=24.0.0` via root `engines`, the strictest range in the dependency tree (`@napi-rs/wasm-runtime` needs 22.13, `concurrently` needs 22, Jest 30 skips 23; D-16); tested on 24 and 26). Library versions for the planned items are checked at install time and recorded in `AGENTS.md`.
+npm workspaces monorepo (npm 11, Node `^22.13.0 || >=24.0.0` via root `engines`, the strictest range in the dependency tree (`@napi-rs/wasm-runtime` needs 22.13, `concurrently` needs 22, Jest 30 skips 23; D-16); tested on 24 and 26). Library versions for the planned items are checked at install time and recorded in `AGENTS.md`.
 
 | Area | Now | Planned |
 | --- | --- | --- |
