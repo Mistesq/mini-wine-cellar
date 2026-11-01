@@ -40,6 +40,8 @@ export class Bottle {
   @Property({ type: "integer", default: 0 })
   likesCount: number = 0;
 
+  // No initializer: the database clock sets it, and the insert's RETURNING
+  // hydrates it, so every API instance orders bottles by the same clock.
   @Property({ type: "timestamptz", defaultRaw: "now()" })
-  createdAt: Date = new Date();
+  createdAt: Date;
 }
