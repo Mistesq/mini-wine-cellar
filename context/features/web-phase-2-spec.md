@@ -15,6 +15,7 @@ Spec 5 (`spec/5-web-cellar`). Builds the cellar UI for the chosen user: the add-
 - Layout: at 375px one column, form above the list, tap targets of at least 44px. At 1280px the form is in a side column and the list is a card grid.
 - Jest tests for `addBottleSchema`: a valid input, each field invalid, the vintage bounds, https only, trimming, empty photoUrl.
 - Remove the temporary `--passWithNoTests` from the web `test` script (added in spec 1), now that `addBottleSchema` has tests.
+- Declare `"@mini-wine-cellar/shared": "*"` in the web `dependencies` once it imports shared (the api does since spec 3). Without it the import resolves only through the hoisted workspace symlink, which `.npmrc` `legacy-peer-deps` and hoisting changes can break.
 
 ## Files to Create
 

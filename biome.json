@@ -15,6 +15,7 @@
       "!**/build",
       "!**/coverage",
       "!apps/api/src/migrations/.snapshot.json",
+      "!apps/api/schema.gql",
       "!.claude",
       "!context"
     ]

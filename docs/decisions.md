@@ -109,3 +109,45 @@ Non-obvious decisions, in the order they were made. Format and rules: Decisions 
 - Decision: `mikro-orm.config.ts` loads `apps/api/.env` with `process.loadEnvFile` when it exists. Without `DATABASE_URL` it uses `postgresql://wine:wine@localhost:5432/wine_cellar`, the compose defaults, unless `NODE_ENV` is `production`: then the app and the CLI fail at start with "DATABASE_URL must be set when NODE_ENV is production". Shell env wins over `.env`.
 - Alternatives: always throw when `DATABASE_URL` is missing (adds a manual step to the local flow); always fall back (a production deploy would silently try localhost); `dotenv` (a new dependency for the same result).
 - Why: the documented local flow works with no extra step, the same way `PORT` falls back to 4000, while a misconfigured production deploy fails loudly instead of connecting to the wrong database.
+
+## D-19: Root .npmrc sets legacy-peer-deps
+- Context: `@nestjs/apollo` 13 (the last line for Nest 11, D-15) depends on the deprecated GraphQL Playground plugin, whose peer is `@apollo/server` 4, while the driver itself needs `@apollo/server` 5. `npm install` fails with ERESOLVE, and npm 11 `overrides` (nested or global) do not lift a peer conflict.
+- Decision: root `.npmrc` with `legacy-peer-deps=true`; `playground: false` in `GraphQLModule`, so the plugin is imported but never used. With peers no longer auto-installed, every peer a package needs is declared in `package.json` by hand. Known side effect: `npm ls` flags `schema-utils` 4.8.1 (peer `webpack ^5.112`) against the `webpack` 5.106.2 pinned by `@nestjs/cli`; both serve only the CLI's webpack build mode, which `nest-cli.json` does not use (the api builds with `tsc`).
+- Alternatives: a one-off `npm install --legacy-peer-deps` (a fresh `npm install` or `npm ci` on another machine fails again); Apollo Server 4 (end of life); Nest 12 with `@nestjs/apollo` 14 (ESM-only, against D-15).
+- Why: the README flow is a plain `npm install`, and the conflicting plugin never runs.
+
+## D-20: The api subtree of the lockfile was re-resolved
+- Context: after the spec 2 downgrade, Nest 11 and its dependencies sat nested in `apps/api/node_modules`, while the new GraphQL packages hoisted to the root, so `@nestjs/graphql` could not resolve `@nestjs/common` (Jest and the app failed with "Cannot find module"). `npm dedupe` does not move packages that are already placed.
+- Decision: the `apps/api/node_modules/*` entries were dropped from `package-lock.json` and reinstalled, so npm placed them again (hoisted). Only `@types/node` / `undici-types` stay nested (web uses another major). No version changed except a root `webpack` 5.112 that npm had added only as a peer. Verified with `npm ci` on a clean tree, lint, typecheck, test and build.
+- Alternatives: regenerate the whole lockfile (moves every version in range); `install-strategy=nested` (duplicates Nest per workspace).
+- Why: the smallest change that gives one copy of Nest that every package resolves, with the rest of the lockfile untouched.
+
+## D-21: formatError is the only error mapper
+- Context: services throw Nest exceptions, Apollo raises its own request errors, and the `@nestjs/apollo` driver has its own HTTP-error pass that turns a 404 into `INTERNAL_SERVER_ERROR` and copies the exception response into `extensions.originalError`.
+- Decision: `autoTransformHttpErrors: false`, `includeStacktraceInErrorResponses: false`, and `formatError` rebuilds every error from `message`, `locations`, `path` and `code` only. `HttpException` 400 / 401 / 404 become `BAD_USER_INPUT` (with `extensions.fields: { field: string[] }` from the `ValidationPipe` `exceptionFactory`) / `UNAUTHENTICATED` / `NOT_FOUND`; Apollo's own client codes (`GRAPHQL_PARSE_FAILED`, `GRAPHQL_VALIDATION_FAILED`, its `BAD_USER_INPUT`) pass through; anything else is logged with its stack and returned as `INTERNAL_SERVER_ERROR` "Internal server error". In production `hideSchemaDetailsFromClientErrors` drops "Did you mean ...?" hints; codes stay the same. `likeBottle(id)` uses `ParseUUIDPipe`, so a bad id is `BAD_USER_INPUT` with a message and no `fields`.
+- Alternatives: keep the driver's mapping and patch it in `formatError` (two places decide the code); map Apollo's codes onto the four contract codes (hides parse vs validation failures from the client).
+- Why: one place decides what a client sees, so no stack, internal message or exception payload leaks, and the form gets messages per field.
+
+## D-22: npm override lifts @graphql-tools/utils for @nestjs/graphql
+- Context: `@nestjs/graphql` 13.4.5 pins `@graphql-tools/utils` 12.0.0, which has two high prototype-pollution advisories: [GHSA-7mx3-vvmw-hjmv](https://github.com/advisories/GHSA-7mx3-vvmw-hjmv) (`mergeDeep`, `<=12.0.0`) and [GHSA-c4qx-w738-7hr3](https://github.com/advisories/GHSA-c4qx-w738-7hr3) (`mergeIncrementalResult`, `<=12.0.1`). npm audit's only fix is `@nestjs/graphql` 14 (Nest 12, against D-15).
+- Decision: root `overrides` `{ "@nestjs/graphql": { "@graphql-tools/utils": "^12.1.0" } }` (the version `@apollo/server` 5 already uses). Verified with `npm ci` on a clean tree, lint, typecheck, test, build and the spec's curl scenarios; runtime audit findings went back to those of `feat/wine-cellar`.
+- Alternatives: accept the risk (`mergeDeep` only sees our own code-first schema, and `@defer` / `@stream` are not used); upgrade to Nest 12.
+- Why: a minor bump of a regular dependency closes both advisories, unlike the peer conflict in D-19, and nothing in the build or tests changed.
+
+## D-23: Accepted runtime advisories in multer and ajv
+- Context: after D-22, npm audit still lists runtime findings that were already on `feat/wine-cellar`, all fixed only in Nest 12 or tooling majors.
+- Decision: accept them and list them in the README Next steps. `multer` / `@nestjs/platform-express` (high, DoS via a pending `fileFilter`, [GHSA-q7qp-rjg7-q26m](https://github.com/advisories/GHSA-q7qp-rjg7-q26m)): the api has no file upload, so multer never handles a request. `ajv` and `@rushstack/*` (moderate, ReDoS with `$data`, [GHSA-2g4f-4pwh-qvx6](https://github.com/advisories/GHSA-2g4f-4pwh-qvx6)) come through `@mikro-orm/migrations` -> `umzug` and load only in the migration CLI, never with untrusted schemas. The remaining findings are dev-only (Jest, Nest CLI).
+- Alternatives: `npm audit fix --force` (downgrades Jest and moves Nest to 12); more overrides (cross majors).
+- Why: none of the vulnerable code paths runs in the app, and the fixes conflict with D-15.
+
+## D-24: AddBottleInput normalizes before it validates
+- Context: the web form trims with Zod and sends an empty optional field, while class-validator's `@IsOptional` skips only `null` and `undefined`.
+- Decision: `@Transform` trims every string before validation (`ValidationPipe` with `transform: true`); for `photoUrl` an empty result becomes `undefined`, so `""` and `"   "` save as `null`. `photoUrl` must be `https://` with no `user:pass@` part (`disallow_auth`), max 2048 chars. Vintage runs a custom constraint that reads `getMaxVintage()` on every validation instead of `@Max(getMaxVintage())`, which would freeze the year at boot.
+- Alternatives: reject untrimmed strings; treat `""` as an invalid URL.
+- Why: the api accepts what the form sends and stores the same values the form shows, and the vintage limit stays correct across New Year without a restart.
+
+## D-25: schema.gql is written outside production only
+- Context: code-first `autoSchemaFile` writes the schema on every start, and the web Codegen reads `apps/api/schema.gql` (A13). A production filesystem may be read-only.
+- Decision: `autoSchemaFile` is the cwd-relative `schema.gql` path unless `NODE_ENV` is `production`, where it is `true` (schema in memory). The generated file is excluded from Biome, which would otherwise reformat it after every start.
+- Alternatives: always write the file; generate it in a separate script.
+- Why: development keeps the committed file fresh for Codegen, and a production start never depends on a writable disk.

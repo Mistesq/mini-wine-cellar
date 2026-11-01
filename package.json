@@ -27,5 +27,10 @@
   "devDependencies": {
     "@biomejs/biome": "2.4.2",
     "concurrently": "^10.0.6"
+  },
+  "overrides": {
+    "@nestjs/graphql": {
+      "@graphql-tools/utils": "^12.1.0"
+    }
   }
 }
