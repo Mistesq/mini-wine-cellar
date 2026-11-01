@@ -124,6 +124,7 @@ Run the formatter and don't hand-format. Now: api uses Prettier (single quotes, 
 
 ## Scope
 - Implement only what the current spec asks. No speculative helpers, abstractions or "for later" code.
+- A spec's "Optional (only if time is left)" items are out of scope unless I explicitly ask for them.
 
 ## Consistency
 - kebab-case file names. One Nest module per domain in apps/api (users, bottles).
