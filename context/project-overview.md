@@ -39,7 +39,7 @@ E. **Ownership.** Every bottle query and mutation is scoped to the user from the
 
 ## Tech Stack
 
-npm workspaces monorepo (npm 10, Node 20.12+ via root `engines`, tested on 24; 20.12 for `process.loadEnvFile`, Next 16 needs 20.9+). Library versions for the planned items are checked at install time and recorded in `AGENTS.md`.
+npm workspaces monorepo (npm 10, Node `^22.22.3 || ^24.15.0 || >=26.0.0` via root `engines`, the strictest range in the dependency tree (Nest CLI via `@angular-devkit/*`; `concurrently` and Nest `file-type` need 22+); tested on 24). Library versions for the planned items are checked at install time and recorded in `AGENTS.md`.
 
 | Area | Now | Planned |
 | --- | --- | --- |
@@ -83,7 +83,7 @@ None.
 
 Ordered specs in `context/features/`. Branch per spec: `spec/<n>-<name>` from `feat/wine-cellar`.
 
-1. `monorepo-phase-1-spec.md` (`spec/1-setup-monorepo`): boilerplate removed, root Biome (`noUnusedImports`, `noUnusedVariables` as error), strict tsconfig flags in each app's own tsconfig (`noUnusedLocals`, `noUnusedParameters`, `noImplicitOverride`, `noFallthroughCasesInSwitch`), `engines` node >=20.12, root scripts (`dev` via `concurrently`), Jest everywhere, `packages/shared` with auto build, docker-compose Postgres, `.env.example`, api port 4000, permissions. Depends on: none.
+1. `monorepo-phase-1-spec.md` (`spec/1-setup-monorepo`): boilerplate removed, root Biome (`noUnusedImports`, `noUnusedVariables` as error), strict tsconfig flags in each app's own tsconfig (`noUnusedLocals`, `noUnusedParameters`, `noImplicitOverride`, `noFallthroughCasesInSwitch`), `engines` node `^22.22.3 || ^24.15.0 || >=26.0.0`, root scripts (`dev` via `concurrently`), Jest everywhere, `packages/shared` with auto build, docker-compose Postgres, `.env.example`, api port 4000, permissions. Depends on: none.
 2. `api-phase-1-spec.md` (`spec/2-api-data`): MikroORM config, User and Bottle entities, first migration, seeder (Anna, Mark, Taras), Users/Bottles services with unit tests, `db:*` scripts. Depends on: 1.
 3. `api-phase-2-spec.md` (`spec/3-api-graphql`): Apollo GraphQL at `/graphql`, CORS, `ValidationPipe`, `formatError`, `x-user-id` guard and `@CurrentUser()`, resolvers, `schema.gql`. Depends on: 2.
 4. `web-phase-1-spec.md` (`spec/4-web-foundation`): shadcn/ui, Apollo Client with the `x-user-id` link, Codegen, stored user and the header picker. Depends on: 3.

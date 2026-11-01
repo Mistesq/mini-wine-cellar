@@ -34,7 +34,7 @@ Use Context7 for the installed MikroORM major before writing entities. In v7 the
 - With the reflect-metadata provider, nullable or union types need an explicit `type` / `nullable: true`.
 - A DESC composite index may need an `expression` index. Afterwards `migration:check` must report no pending changes.
 - `noImplicitOverride` is on: the generated migration (`up`/`down`) and the seeder's `run` need `override`.
-- The CLI must load `mikro-orm.config.ts` under TypeScript 6 (ts-node is installed; check that it works). Env loading: `process.loadEnvFile()` (Node 20.12+, matches `engines`) with no new dependency; it must not crash when `.env` is missing.
+- The CLI must load `mikro-orm.config.ts` under TypeScript 6 (ts-node is installed; check that it works). Env loading: `process.loadEnvFile()` (Node 20.12+, covered by `engines`) with no new dependency; it must not crash when `.env` is missing.
 
 ## Environment Variables
 
