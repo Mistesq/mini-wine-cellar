@@ -2,7 +2,7 @@
 
 # Mini Wine Cellar
 
-TODO: one-line product description (comes from `context/project-spec.md`). Repo: npm workspaces monorepo with a NestJS API (`apps/api`) and a Next.js web app (`apps/web`).
+A small full-stack app where each user keeps a personal list of wine bottles, adds new ones and likes the ones they enjoy. Repo: npm workspaces monorepo with a NestJS API (`apps/api`), a Next.js web app (`apps/web`) and shared validation limits (`packages/shared`).
 
 ## Context Files
 
@@ -15,17 +15,14 @@ Read the following to get the full context of the project:
 
 ## Commands
 
-The root `package.json` has no working scripts yet. Run everything from the repo root and target a workspace with `-w web` or `-w api`. Spec 1 adds root workspace scripts (`dev`, `test`, `lint`, `typecheck`) and a single root Biome; update this list when that lands.
+Run everything from the repo root. `packages/shared` is built automatically (`prepare` after `npm install`, plus `predev`, `pretypecheck`, `pretest`; `npm run build` builds it first through the workspace order); build it by hand only when running a single workspace script: `npm run build:shared`.
 
-- **Dev server (web)**: `npm run dev -w web` (Next.js, port 3000)
-- **Dev server (api)**: `npm run start:dev -w api` (currently `PORT` env, default 3000; spec 1 moves it to 4000, GraphQL at `/graphql`)
-- **Build**: `npm run build -w web` / `npm run build -w api`
-- **Lint**: `npm run lint -w web` (Biome) / `npm run lint -w api` (oxlint)
-- **Format**: `npm run format -w web` (Biome) / `npm run format -w api` (Prettier)
-- **Typecheck (web)**: `npm exec -w web -- next typegen` then `npm exec -w web -- tsc --noEmit` (route types such as `LayoutProps` exist only after typegen, dev or build)
-- **Typecheck (api)**: `npm exec -w api -- tsc --noEmit`
-- **Test (api, once)**: `npm test -w api` (Jest, unit `src/**/*.spec.ts`)
-- **Test (api, watch)**: `npm run test:watch -w api`
-- **Test (api, e2e)**: `npm run test:e2e -w api` (`test/*.e2e-spec.ts`, supertest)
-- **Test (web)**: none yet; spec 1 adds Jest via `next/jest`
-- **DB**: none yet; spec 1 adds PostgreSQL (docker-compose) and MikroORM migrations
+- **Dev (both apps)**: `npm run dev` (`concurrently`: api on 4000, web on 3000)
+- **Dev (one app)**: `npm run start:dev -w api` / `npm run dev -w web`
+- **Build**: `npm run build`
+- **Lint**: `npm run lint` (Biome, root only; workspaces have no lint script)
+- **Format**: `npm run format` (Biome `check --write`, root only)
+- **Typecheck**: `npm run typecheck` (each workspace runs its own `tsc`; web runs `next typegen` first)
+- **Test**: `npm test` (Jest in every workspace; api `src/**/*.spec.ts`, web and shared `src/**/*.test.ts`)
+- **Test (one workspace)**: `npm test -w api` / `npm test -w web` / `npm test -w @mini-wine-cellar/shared`; watch: `npm run test:watch -w api`
+- **DB**: `docker compose up -d` (Postgres 18 on 5432), `docker compose ps` for health; MikroORM migrations come in spec 2

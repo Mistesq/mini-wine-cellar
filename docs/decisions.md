@@ -55,3 +55,27 @@ Non-obvious decisions, in the order they were made. Format and rules: Decisions 
 - Decision: Jest everywhere: ts-jest in the api and `packages/shared`, `next/jest` in the web app.
 - Alternatives: Vitest in the web app.
 - Why: the brief requires Jest, and one runner keeps the root `npm test` and the test style uniform.
+
+## D-10: Biome overrides for Nest in apps/api
+- Context: one root Biome config lints the Nest app, and two default behaviours broke on a throwaway Nest service.
+- Decision: an `overrides` entry for `apps/api/**` turns `style/useImportType` off and sets `javascript.parser.unsafeParameterDecoratorsEnabled: true`.
+- Alternatives: keep `useImportType` and mark each DI import with a suppression comment; keep Biome away from the api and lint it with another tool.
+- Why: `useImportType` rewrites DI-injected classes to `import type`, which erases them and breaks `emitDecoratorMetadata`; parameter decorators such as `@Param()` and `@Args()` are a parse error without the parser flag.
+
+## D-11: apps/web tsconfig excludes .next/dev/types
+- Context: `noUnusedLocals` is on in the web app, and the `validator.ts` that `next dev` writes to `.next/dev/types` has unused imports, so typecheck and build failed after any dev run.
+- Decision: `exclude` in `apps/web/tsconfig.json` lists `.next/dev/types/**`. The copy that `next typegen` and `next build` write to `.next/types` is still checked.
+- Alternatives: remove the path from `include` (Next adds it back); turn `noUnusedLocals` off for the web app; delete `.next/dev` before every typecheck.
+- Why: the excluded file is a dev-time duplicate of a validator that is checked anyway, and `exclude` is the only place Next does not rewrite.
+
+## D-12: Node engines is the maximum of the dependency minimums
+- Context: the plan said `>=20.12` (for `process.loadEnvFile` and Next 16), but npm printed `EBADENGINE` for packages in the tree.
+- Decision: root `engines.node` is `^22.22.3 || ^24.15.0 || >=26.0.0`, the strictest range found in the `engines` of every package in the lockfile (Nest CLI via `@angular-devkit/*`). It also covers `concurrently` 10 and Nest's `file-type` (>=22) and `@nestjs/schematics` (>=22.12). `@types/node` in both apps is pinned to the lowest supported major (22), so the types never offer APIs that the oldest supported Node lacks.
+- Alternatives: `>=20.12` (understates what the tree needs); `>=22.22.3` (wrongly allows 24.0-24.14).
+- Why: `engines` should tell a developer the real minimum before something fails at runtime, and only the full tree knows it.
+
+## D-13: Postgres 18 in docker-compose
+- Context: the compose file pins a major version, which should be the latest stable one that MikroORM supports.
+- Decision: `postgres:18-alpine`, with the named volume mounted at `/var/lib/postgresql`.
+- Alternatives: 19 (only release candidates on Docker Hub); 17 (older, no benefit here).
+- Why: 18 is the newest stable major and MikroORM 7.2 talks to it through `pg` 8. From 18 on the image stores data in a versioned subfolder, so mounting the old `/var/lib/postgresql/data` path would not persist data.

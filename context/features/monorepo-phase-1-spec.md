@@ -10,8 +10,8 @@ Spec 1 (`spec/1-setup-monorepo`). Turns the two scaffolds into one monorepo: sca
 - One `biome.json` at the root for all workspaces. Delete `apps/web/biome.json`, `apps/api/oxlint.json`, `apps/api/.prettierrc`, and the oxlint and Prettier dependencies and scripts. Workspaces have no `lint` or `format` scripts; both run only from the root. Rules: `recommended`, plus `noExplicitAny`, `noUnusedImports`, `noUnusedVariables` as `error`. The `next` and `react` domains apply only to `apps/web` (overrides). Reformat the api once with Biome.
 - Strict flags in each workspace's own tsconfig (api, web, shared), not in a shared base: `noUnusedLocals`, `noUnusedParameters`, `noImplicitOverride`, `noFallthroughCasesInSwitch`. Each app keeps its own TypeScript major.
 - `packages/shared` (`@mini-wine-cellar/shared`): `BOTTLE_LIMITS` (text 1-100, photoUrl max 2048, vintage min 1900) and `getMaxVintage(now?)` returning the current UTC year. No runtime deps. Built with its own `tsc` to CommonJS + `.d.ts` in `dist/`, exposed through `exports`.
-- The shared build runs automatically: root `prepare` (after `npm install`) and `predev`, `prebuild`, `pretest`, `pretypecheck`. Nobody builds it by hand.
-- Root `package.json`: `"engines": { "node": ">=20.12" }` (`process.loadEnvFile` needs 20.12, Next 16 needs 20.9+). Scripts: `dev` (api and web in parallel via `concurrently`), `build`, `lint` (`biome check .`), `format` (`biome check --write .`), `typecheck`, `test`. `typecheck` and `test` run through `--workspaces --if-present`; each workspace has its own `typecheck` (web: `next typegen && tsc --noEmit`).
+- The shared build runs automatically: root `prepare` (after `npm install`) and `predev`, `pretest`, `pretypecheck`. `build` needs no hook: `--workspaces` runs `packages/*` first. Nobody builds it by hand.
+- Root `package.json`: `"engines": { "node": "^22.22.3 || ^24.15.0 || >=26.0.0" }`, the maximum of the minimum Node versions in the dependency tree (Nest CLI via `@angular-devkit/*`; `concurrently` 10 and Nest `file-type` need 22+; Next 16 needs 20.9+, `process.loadEnvFile` 20.12+). Scripts: `dev` (api and web in parallel via `concurrently`), `build`, `lint` (`biome check .`), `format` (`biome check --write .`), `typecheck`, `test`. `typecheck` and `test` run through `--workspaces --if-present`; each workspace has its own `typecheck` (web: `next typegen && tsc --noEmit`).
 - Jest everywhere: web via `next/jest` (node environment, co-located `*.test.ts`), shared via ts-jest with a test for `BOTTLE_LIMITS` and `getMaxVintage`. The api keeps its Jest config. api and web have no tests yet, so their `test` scripts get `--passWithNoTests` temporarily (removed in spec 2 for api, in spec 5 for web).
 - `docker-compose.yml` with Postgres (pinned to the latest stable major that the installed MikroORM supports, named volume mounted at `/var/lib/postgresql`, healthcheck, port 5432). `apps/api/.env.example` and `apps/web/.env.example`. Allow `docker compose` and the MikroORM CLI in `.claude/settings.json`. Update the Commands in `CLAUDE.md` and the versions in `AGENTS.md`.
 
@@ -21,7 +21,7 @@ Spec 1 (`spec/1-setup-monorepo`). Turns the two scaffolds into one monorepo: sca
 2. `biome.json` (root) - the single lint/format config
 3. `apps/api/tsconfig.json`, `apps/web/tsconfig.json` - strict flags
 4. `packages/shared/{package.json,tsconfig.json,src/index.ts,src/limits.test.ts,jest.config.*}`
-5. `apps/web/jest.config.ts` - `next/jest`
+5. `apps/web/jest.config.js` - `next/jest`
 6. `docker-compose.yml`, `apps/api/.env.example`, `apps/web/.env.example`
 7. `apps/api/src/main.ts`, `apps/api/src/app.module.ts`, `apps/web/src/app/page.tsx` - boilerplate removed
 8. `.claude/settings.json`, `CLAUDE.md`, `AGENTS.md`
