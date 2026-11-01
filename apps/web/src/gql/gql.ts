@@ -14,9 +14,17 @@ import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
+    "\n  query MyBottles {\n    myBottles {\n      id\n      name\n      producer\n      vintage\n      region\n      photoUrl\n      likesCount\n    }\n  }\n": typeof types.MyBottlesDocument,
+    "\n  mutation AddBottle($input: AddBottleInput!) {\n    addBottle(input: $input) {\n      id\n      name\n      producer\n      vintage\n      region\n      photoUrl\n      likesCount\n    }\n  }\n": typeof types.AddBottleDocument,
+    "\n  fragment BottleLikes on Bottle {\n    likesCount\n  }\n": typeof types.BottleLikesFragmentDoc,
+    "\n  mutation LikeBottle($id: ID!) {\n    likeBottle(id: $id) {\n      id\n      likesCount\n    }\n  }\n": typeof types.LikeBottleDocument,
     "\n  query Users {\n    users {\n      id\n      name\n    }\n  }\n": typeof types.UsersDocument,
 };
 const documents: Documents = {
+    "\n  query MyBottles {\n    myBottles {\n      id\n      name\n      producer\n      vintage\n      region\n      photoUrl\n      likesCount\n    }\n  }\n": types.MyBottlesDocument,
+    "\n  mutation AddBottle($input: AddBottleInput!) {\n    addBottle(input: $input) {\n      id\n      name\n      producer\n      vintage\n      region\n      photoUrl\n      likesCount\n    }\n  }\n": types.AddBottleDocument,
+    "\n  fragment BottleLikes on Bottle {\n    likesCount\n  }\n": types.BottleLikesFragmentDoc,
+    "\n  mutation LikeBottle($id: ID!) {\n    likeBottle(id: $id) {\n      id\n      likesCount\n    }\n  }\n": types.LikeBottleDocument,
     "\n  query Users {\n    users {\n      id\n      name\n    }\n  }\n": types.UsersDocument,
 };
 
@@ -34,6 +42,22 @@ const documents: Documents = {
  */
 export function graphql(source: string): unknown;
 
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query MyBottles {\n    myBottles {\n      id\n      name\n      producer\n      vintage\n      region\n      photoUrl\n      likesCount\n    }\n  }\n"): (typeof documents)["\n  query MyBottles {\n    myBottles {\n      id\n      name\n      producer\n      vintage\n      region\n      photoUrl\n      likesCount\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation AddBottle($input: AddBottleInput!) {\n    addBottle(input: $input) {\n      id\n      name\n      producer\n      vintage\n      region\n      photoUrl\n      likesCount\n    }\n  }\n"): (typeof documents)["\n  mutation AddBottle($input: AddBottleInput!) {\n    addBottle(input: $input) {\n      id\n      name\n      producer\n      vintage\n      region\n      photoUrl\n      likesCount\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment BottleLikes on Bottle {\n    likesCount\n  }\n"): (typeof documents)["\n  fragment BottleLikes on Bottle {\n    likesCount\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation LikeBottle($id: ID!) {\n    likeBottle(id: $id) {\n      id\n      likesCount\n    }\n  }\n"): (typeof documents)["\n  mutation LikeBottle($id: ID!) {\n    likeBottle(id: $id) {\n      id\n      likesCount\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

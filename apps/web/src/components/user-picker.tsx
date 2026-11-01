@@ -8,8 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { USERS_QUERY } from "@/graphql/users";
 import { setCurrentUserId, useCurrentUserId } from "@/lib/current-user-store";
-import { USERS_QUERY } from "@/lib/users-query";
 
 export function UserPicker() {
   const { data, loading, error } = useQuery(USERS_QUERY);

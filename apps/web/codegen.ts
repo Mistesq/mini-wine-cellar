@@ -9,6 +9,10 @@ const config: CodegenConfig = {
       preset: "client",
       config: {
         useTypeImports: true,
+        // Apollo adds __typename to every selection at runtime; typing it lets an
+        // optimisticResponse carry the __typename the cache needs to find the entity.
+        nonOptionalTypename: true,
+        skipTypeNameForRoot: true,
         // DateTime arrives over JSON as an ISO string.
         scalars: { DateTime: "string" },
       },
