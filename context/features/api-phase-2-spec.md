@@ -35,7 +35,7 @@ Spec 3 (`spec/3-api-graphql`). Exposes the data layer through a code-first Graph
 
 ## Notes
 
-Use Context7 for the installed `@nestjs/graphql` / `@nestjs/apollo` and Apollo Server majors.
+Use Context7 for the installed `@nestjs/graphql` / `@nestjs/apollo` and Apollo Server majors. The api is on Nest 11 (D-15): install `@nestjs/graphql` / `@nestjs/apollo` 13.x, as 14.x requires Nest 12 and is ESM-only.
 
 - Apollo Server 5 has no built-in Express integration; check which integration package the installed `@nestjs/apollo` expects for Express 5.
 - Do not write `@Max(getMaxVintage())`: a decorator argument is evaluated once at boot. Use a custom constraint that calls `getMaxVintage()` on every validation.
