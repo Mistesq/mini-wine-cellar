@@ -104,6 +104,20 @@ Run the formatter and don't hand-format. Now: api uses Prettier (single quotes, 
 ## Comments
 - Comment only the "why": non-obvious decisions and trade-offs. Never restate what the code does.
 
+## Decisions
+- Non-obvious decisions live in `docs/decisions.md` (English), numbered `D-<n>` in order. Never renumber or delete an entry; a reversed decision gets a new entry that points to the old one.
+- When a spec makes a non-obvious decision, add an entry on `/feature complete`, in this format:
+
+```markdown
+## D-<n>: <decision in one line>
+- Context: why the question came up
+- Decision: what we do
+- Alternatives: what else was considered
+- Why: the reason in 1-2 sentences
+```
+
+- `PR.md` "Key decisions" links to `docs/decisions.md` and does not repeat it.
+
 ## Errors
 - No try/catch that only logs. Throw Nest exceptions (NotFoundException, BadRequestException) and let them become GraphQL errors.
 - Catch only where the code can recover or translate the error.
