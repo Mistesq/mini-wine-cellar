@@ -3,13 +3,13 @@
 ## TypeScript
 
 - Strict mode is on in both apps (`strict: true`; the api also sets `strictPropertyInitialization: false` for Nest DI)
-- No `any` types. Use proper typing or `unknown` and narrow. `apps/api/oxlint.json` currently turns `no-explicit-any` off; spec 1 replaces it with root Biome `noExplicitAny: error`
+- No `any` types. Use proper typing or `unknown` and narrow. Root Biome enforces `noExplicitAny: error`
 - Define types for props, API requests/responses and data models
 - Use type inference where obvious, explicit types where helpful
 
 ## Boundaries
 
-- Validate all external input at the boundary: request bodies, params, query strings, forms, env, third-party responses (libraries arrive in spec 1)
+- Validate all external input at the boundary: request bodies, params, query strings, forms, env, third-party responses
   - web: Zod schemas with react-hook-form
   - api: class-validator on input DTOs with a global `ValidationPipe`
   - Shared limits (lengths, ranges) live in `packages/shared` and both sides import them. Never duplicate a limit
@@ -18,7 +18,7 @@
 
 ## Data
 
-PostgreSQL (docker-compose) + MikroORM, added in spec 1.
+PostgreSQL 18 (docker-compose) + MikroORM 6.
 
 - Schema changes only through MikroORM migrations. Never sync schema directly to a shared database
 - Unique constraints for natural keys instead of check-then-insert
@@ -29,7 +29,7 @@ PostgreSQL (docker-compose) + MikroORM, added in spec 1.
 
 - Secrets come from env, never from code or commits (`.env*` is gitignored)
 - Authorization check on every mutation and every protected read
-- Auth is fake: the `x-user-id` header, checked by a Nest guard (spec 1). Scope every query to that user
+- Auth is fake: the `x-user-id` header, checked by a Nest guard (`UserIdGuard`). Scope every query to that user
 
 ## React (`apps/web`)
 
@@ -47,17 +47,16 @@ apps/
       app.module.ts    root module
       users/           one folder per Nest module: <name>.module.ts, .service.ts, .spec.ts, resolver/DTOs
       bottles/
-    test/              e2e tests (*.e2e-spec.ts) + jest-e2e.json
   web/                 Next.js App Router
     src/app/           routes (page.tsx, layout.tsx), import alias @/* -> src/*
     src/components/    UI components, PascalCase exports
     public/            static assets
 packages/
-  shared/              shared validation limits (spec 1)
+  shared/              shared validation limits
 context/               specs and AI context
 ```
 
-Today the api has only the scaffold files (`app.controller/service/module.ts`) at the `src/` root. `users/`, `bottles/` and `packages/shared/` are created in spec 1.
+Besides the module folders, the api has `auth/` (guard and `@CurrentUser()`), `graphql/` (`formatError`), `migrations/` and `seeders/` under `src/`.
 
 ## Naming
 
@@ -70,7 +69,7 @@ Today the api has only the scaffold files (`app.controller/service/module.ts`) a
 
 ## Formatting
 
-Run the formatter and don't hand-format. Now: api uses Prettier (single quotes, trailing commas), web uses Biome (2-space indent, double quotes, organized imports). Spec 1 moves both to one root Biome config.
+Run the formatter and don't hand-format: `npm run format` (one root Biome config for every workspace: 2-space indent, double quotes, organized imports).
 
 ## Code Quality
 
@@ -116,6 +115,7 @@ Run the formatter and don't hand-format. Now: api uses Prettier (single quotes, 
 - Why: the reason in 1-2 sentences
 ```
 
+- When a later entry corrects, replaces or completes an earlier one, the earlier entry gets one line right under its heading, `- Status: <corrected by / replaced by / ...> [D-<n>](#anchor).`, and its text stays as it was.
 - `PR.md` "Key decisions" links to `docs/decisions.md` and does not repeat it.
 
 ## Errors

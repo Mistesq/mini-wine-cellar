@@ -16,13 +16,16 @@ describe("getServerFieldErrors", () => {
       code: "BAD_USER_INPUT",
       fields: {
         name: ["name must be shorter than or equal to 100 characters"],
-        photoUrl: ["photoUrl must be an https:// URL", "second message"],
+        photoUrl: [
+          "Photo URL must be an https:// URL with a valid domain",
+          "second message",
+        ],
         unknown: ["ignored"],
       },
     });
     expect(getServerFieldErrors(error, FIELDS)).toEqual({
       name: "name must be shorter than or equal to 100 characters",
-      photoUrl: "photoUrl must be an https:// URL",
+      photoUrl: "Photo URL must be an https:// URL with a valid domain",
     });
   });
 
@@ -58,6 +61,15 @@ describe("getErrorMessage", () => {
   it("returns the first GraphQL error message", () => {
     expect(getErrorMessage(graphQLError("Bottle not found"), "fallback")).toBe(
       "Bottle not found",
+    );
+  });
+
+  it("asks to choose a user instead of showing the UNAUTHENTICATED text", () => {
+    const error = graphQLError("A valid x-user-id header is required", {
+      code: "UNAUTHENTICATED",
+    });
+    expect(getErrorMessage(error, "fallback")).toBe(
+      "Choose a user to open the cellar",
     );
   });
 

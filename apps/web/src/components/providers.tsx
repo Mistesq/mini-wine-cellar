@@ -12,8 +12,9 @@ export function Providers({ children }: { children: ReactNode }) {
   const [client] = useState(createApolloClient);
 
   // The one place a user switch drops the previous user's cache, whichever tab
-  // made it. resetStore, not clearStore: both cancel in-flight requests, but
-  // only resetStore refetches the mounted queries with the new x-user-id.
+  // made it. resetStore, not clearStore: both cancel in-flight queries (not
+  // mutations, D-33), but only resetStore refetches the mounted queries with
+  // the new x-user-id.
   useEffect(
     () =>
       subscribeToCurrentUser(() => {

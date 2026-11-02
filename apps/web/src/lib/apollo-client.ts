@@ -1,11 +1,7 @@
-import {
-  ApolloClient,
-  ApolloLink,
-  HttpLink,
-  InMemoryCache,
-} from "@apollo/client";
+import { ApolloClient, ApolloLink, HttpLink } from "@apollo/client";
 import { SetContextLink } from "@apollo/client/link/context";
 import { resolveApiUrl } from "./api-url";
+import { createApolloCache } from "./apollo-cache";
 import { getCurrentUserId } from "./current-user-store";
 
 // Module scope on purpose: `next build` prerenders `/`, so a production build
@@ -27,7 +23,7 @@ const userIdLink = new SetContextLink((prevContext) => {
 
 export function createApolloClient(): ApolloClient {
   return new ApolloClient({
-    cache: new InMemoryCache(),
+    cache: createApolloCache(),
     link: ApolloLink.from([userIdLink, new HttpLink({ uri: API_URL })]),
   });
 }

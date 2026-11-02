@@ -27,7 +27,7 @@ describe("BottlesService", () => {
     create: jest.fn(),
     flush: jest.fn(),
     nativeUpdate: jest.fn(),
-    findOneOrFail: jest.fn(),
+    findOne: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -87,7 +87,7 @@ describe("BottlesService", () => {
     it("increments atomically for the owner and returns the reloaded bottle", async () => {
       const bottle = { id: BOTTLE_ID, likesCount: 4 };
       em.nativeUpdate.mockResolvedValue(1);
-      em.findOneOrFail.mockResolvedValue(bottle);
+      em.findOne.mockResolvedValue(bottle);
 
       await expect(service.like(OWNER_ID, BOTTLE_ID)).resolves.toBe(bottle);
       expect(raw).toHaveBeenCalledWith("likes_count + 1");
@@ -96,7 +96,7 @@ describe("BottlesService", () => {
         { id: BOTTLE_ID, owner: OWNER_ID },
         { likesCount: { sql: "likes_count + 1" } },
       );
-      expect(em.findOneOrFail).toHaveBeenCalledWith(
+      expect(em.findOne).toHaveBeenCalledWith(
         Bottle,
         { id: BOTTLE_ID, owner: OWNER_ID },
         { refresh: true },
@@ -109,7 +109,16 @@ describe("BottlesService", () => {
       await expect(service.like(OWNER_ID, BOTTLE_ID)).rejects.toBeInstanceOf(
         NotFoundException,
       );
-      expect(em.findOneOrFail).not.toHaveBeenCalled();
+      expect(em.findOne).not.toHaveBeenCalled();
+    });
+
+    it("throws NotFoundException when the row is gone before the reload", async () => {
+      em.nativeUpdate.mockResolvedValue(1);
+      em.findOne.mockResolvedValue(null);
+
+      await expect(service.like(OWNER_ID, BOTTLE_ID)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
   });
 });

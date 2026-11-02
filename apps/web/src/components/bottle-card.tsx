@@ -71,6 +71,8 @@ function BottlePhoto({
       src={url}
       alt={name}
       loading="lazy"
+      // The url points at any host, so do not tell it which page shows the photo.
+      referrerPolicy="no-referrer"
       className="aspect-[4/3] w-full object-cover"
       onError={() => setFailedUrl(url)}
     />

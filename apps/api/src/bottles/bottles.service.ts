@@ -47,11 +47,16 @@ export class BottlesService {
     if (affected === 0) {
       throw new NotFoundException("Bottle not found");
     }
-    // nativeUpdate skips the identity map, so reload the row from the database.
-    return this.em.findOneOrFail(
+    // nativeUpdate skips the identity map, so reload the row in a second query.
+    // Its likesCount may already include likes that landed in between (D-32).
+    const bottle = await this.em.findOne(
       Bottle,
       { id, owner: ownerId },
       { refresh: true },
     );
+    if (!bottle) {
+      throw new NotFoundException("Bottle not found");
+    }
+    return bottle;
   }
 }

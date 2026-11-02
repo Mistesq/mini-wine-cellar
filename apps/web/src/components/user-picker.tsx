@@ -14,6 +14,7 @@ import { setCurrentUserId, useCurrentUserId } from "@/lib/current-user-store";
 export function UserPicker() {
   const { data, loading, error } = useQuery(USERS_QUERY);
   const userId = useCurrentUserId();
+  const isKnownUser = data?.users.some((user) => user.id === userId) ?? false;
 
   if (error) {
     return (
@@ -25,8 +26,9 @@ export function UserPicker() {
 
   return (
     <Select
-      // Radix shows the placeholder only for "", so keep it until the items exist.
-      value={data ? (userId ?? "") : ""}
+      // Radix shows the placeholder only for "", so keep it until the stored id
+      // matches an item; an id from before a reseed would leave the trigger blank.
+      value={isKnownUser && userId ? userId : ""}
       onValueChange={setCurrentUserId}
       disabled={loading}
     >

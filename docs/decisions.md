@@ -2,7 +2,20 @@
 
 Non-obvious decisions, in the order they were made. Format and rules: Decisions in `context/coding-standards.md`.
 
+## Start here
+
+The decisions that shape the app most, one line each:
+
+- A like is a counter with one atomic increment, because users see only their own bottles: [D-1](#d-1-a-like-is-a-counter-with-an-atomic-sql-increment), [D-30](#d-30-why-a-like-is-a-counter-completes-d-1), [D-32](#d-32-likebottle-is-one-atomic-update-plus-a-separate-read-corrects-d-1).
+- Another user's bottle returns NotFound, not Forbidden, so its id is never confirmed: [D-2](#d-2-another-users-bottle-returns-notfound-not-forbidden).
+- The `x-user-id` guard is the only auth seam; real auth replaces only the guard: [D-3](#d-3-the-guard-is-the-only-place-that-knows-how-a-user-is-identified).
+- The api stays on Nest 11 and MikroORM 6, the last CommonJS majors that Jest loads without experimental flags: [D-15](#d-15-the-api-stays-on-commonjs-majors-nest-11-and-mikroorm-6).
+- `formatError` is the one place that decides what a client sees in an error: [D-21](#d-21-formaterror-is-the-only-error-mapper).
+- The web cache is protected against a user switch mid-request and against like responses arriving out of order: [D-33](#d-33-a-user-switch-does-not-cancel-an-addbottle-in-flight-corrects-d-27), [D-34](#d-34-the-cached-like-count-never-goes-down).
+- The web form and the api read the same validation limits from `packages/shared`: [D-4](#d-4-validation-limits-live-in-packagesshared).
+
 ## D-1: A like is a counter with an atomic SQL increment
+- Status: corrected by [D-32](#d-32-likebottle-is-one-atomic-update-plus-a-separate-read-corrects-d-1) (and completed by [D-30](#d-30-why-a-like-is-a-counter-completes-d-1)).
 - Context: the brief asks for likes whose count updates instantly, without a page reload.
 - Decision: `likes_count` is a column on `bottle`; `likeBottle` runs `UPDATE bottle SET likes_count = likes_count + 1 WHERE id = ? AND owner_id = ?`. No toggle, no per-user like rows. The web client shows the new count at once through an Apollo `optimisticResponse`.
 - Alternatives: a `like` table with one row per user and bottle (toggle, unique constraint); read-modify-write in the service.
@@ -33,6 +46,7 @@ Non-obvious decisions, in the order they were made. Format and rules: Decisions 
 - Why: the brief asks for Apollo Server, and the app runs on Express, which Mercurius does not target.
 
 ## D-6: The bottle list is not paginated
+- Status: index superseded by [D-17](#d-17-the-mybottles-index-is-ascending).
 - Context: `myBottles` returns a user's whole cellar.
 - Decision: no pagination; order `created_at DESC, id DESC`, backed by an index on `(owner_id, created_at DESC, id DESC)`.
 - Alternatives: cursor pagination on `(created_at, id)`; offset pagination.
@@ -69,12 +83,14 @@ Non-obvious decisions, in the order they were made. Format and rules: Decisions 
 - Why: the excluded file is a dev-time duplicate of a validator that is checked anyway, and `exclude` is the only place Next does not rewrite.
 
 ## D-12: Node engines is the maximum of the dependency minimums
+- Status: value replaced by [D-16](#d-16-node-engines-recalculated-after-the-nest-11-downgrade).
 - Context: the plan said `>=20.12` (for `process.loadEnvFile` and Next 16), but npm printed `EBADENGINE` for packages in the tree.
 - Decision: root `engines.node` is `^22.22.3 || ^24.15.0 || >=26.0.0`, the strictest range found in the `engines` of every package in the lockfile (Nest CLI via `@angular-devkit/*`). It also covers `concurrently` 10 and Nest's `file-type` (>=22) and `@nestjs/schematics` (>=22.12). `@types/node` in both apps is pinned to the lowest supported major (22), so the types never offer APIs that the oldest supported Node lacks.
 - Alternatives: `>=20.12` (understates what the tree needs); `>=22.22.3` (wrongly allows 24.0-24.14).
 - Why: `engines` should tell a developer the real minimum before something fails at runtime, and only the full tree knows it.
 
 ## D-13: Postgres 18 in docker-compose
+- Status: MikroORM version per [D-15](#d-15-the-api-stays-on-commonjs-majors-nest-11-and-mikroorm-6).
 - Context: the compose file pins a major version, which should be the latest stable one that MikroORM supports.
 - Decision: `postgres:18-alpine`, with the named volume mounted at `/var/lib/postgresql`.
 - Alternatives: 19 (only release candidates on Docker Hub); 17 (older, no benefit here).
@@ -117,6 +133,7 @@ Non-obvious decisions, in the order they were made. Format and rules: Decisions 
 - Why: the README flow is a plain `npm install`, and the conflicting plugin never runs.
 
 ## D-20: The api subtree of the lockfile was re-resolved
+- Status: corrected by [D-31](#d-31-the-root-webpack-is-51062-not-5112-corrects-d-20).
 - Context: after the spec 2 downgrade, Nest 11 and its dependencies sat nested in `apps/api/node_modules`, while the new GraphQL packages hoisted to the root, so `@nestjs/graphql` could not resolve `@nestjs/common` (Jest and the app failed with "Cannot find module"). `npm dedupe` does not move packages that are already placed.
 - Decision: the `apps/api/node_modules/*` entries were dropped from `package-lock.json` and reinstalled, so npm placed them again (hoisted). Only `@types/node` / `undici-types` stay nested (web uses another major). No version changed except a root `webpack` 5.112 that npm had added only as a peer. Verified with `npm ci` on a clean tree, lint, typecheck, test and build.
 - Alternatives: regenerate the whole lockfile (moves every version in range); `install-strategy=nested` (duplicates Nest per workspace).
@@ -159,6 +176,7 @@ Non-obvious decisions, in the order they were made. Format and rules: Decisions 
 - Why: local dev runs right after clone, and a production bundle can never be built against localhost by accident.
 
 ## D-27: A user switch resets the Apollo store from one listener
+- Status: corrected by [D-33](#d-33-a-user-switch-does-not-cancel-an-addbottle-in-flight-corrects-d-27).
 - Context: the stored user can change from the header picker or from another tab (`storage` event), and the previous user's cached data must not survive the switch. Apollo's `clearStore` and `resetStore` both cancel in-flight requests and reset the mounted queries.
 - Decision: `current-user-store.ts` notifies its listeners only on a real change (never on hydration), and `Providers` subscribes once and calls `client.resetStore()`. `x-user-id` is read from `localStorage` in a `SetContextLink` at request time, so the client is never rebuilt.
 - Alternatives: `clearStore` in the picker's change handler (mounted queries stay reset with no refetch, and a switch in another tab is missed); recreate the client per user (loses the provider identity and remounts the tree).
@@ -181,3 +199,33 @@ Non-obvious decisions, in the order they were made. Format and rules: Decisions 
 - Decision: keep D-1, a `likes_count` counter incremented atomically by `UPDATE ... SET likes_count = likes_count + 1`, with no toggle and no per-user record. With "one like per user" only the owner could ever like a bottle, so the count would always be 0 or 1 and the "like count" in the brief would mean nothing.
 - Alternatives: a `like` table with `unique (user_id, bottle_id)`, a toggle mutation, and the count computed as `count(*)` (or a counter kept in sync with it).
 - Why: a counter is the only reading in which "like count" is a real number when users see only their own bottles; the atomic increment keeps rapid clicks from being lost (D-1).
+
+## D-31: The root webpack is 5.106.2, not 5.112 (corrects D-20)
+- Context: D-20 says npm added a root `webpack` 5.112 as a peer while re-resolving the api subtree. The committed `package-lock.json` holds `webpack` 5.106.2 (pinned by `@nestjs/cli`), and `npm ls --all` marks it invalid against the `schema-utils` 4.8.1 peer `^5.112.0`, as D-19 already notes.
+- Decision: D-20 stays as written; the lockfile is the source of truth: `webpack` 5.106.2 with one known invalid peer. `npm ls --all` has exactly three known invalid entries: `ajv-formats` (optional peer of `@hookform/resolvers`), `@apollo/server` (D-19) and `webpack`.
+- Alternatives: add `webpack` ^5.112 to the api devDependencies (bumps a dependency of the Nest CLI only to silence `npm ls`); an override for `@nestjs/cli` (crosses the version the CLI pins).
+- Why: `webpack` and `schema-utils` load only in the Nest CLI's webpack build mode, which `nest-cli.json` does not use, so the invalid peer changes nothing at build or run time.
+
+## D-32: likeBottle is one atomic UPDATE plus a separate read (corrects D-1)
+- Context: D-1 and the project overview described `likeBottle` as one statement (`UPDATE ... RETURNING *`). The service runs the conditional `UPDATE` through `nativeUpdate` and then reads the row back with a second query, without a transaction. The read used `findOneOrFail`, whose MikroORM `NotFoundError` would reach the client as `INTERNAL_SERVER_ERROR`.
+- Decision: keep the two queries and describe them as they are. The increment stays one conditional `UPDATE`, so it is atomic and owner-scoped (D-1, D-2 hold). The read is `findOne`, and a missing row throws `NotFoundException`, the same as a failed update. The returned `likesCount` may already include likes that landed between the two queries.
+- Alternatives: `UPDATE ... RETURNING *` as raw SQL with a manual entity mapping (loses MikroORM's typed filter and mapping); a transaction around both queries (one more round trip, and the count is stale as soon as it commits anyway).
+- Why: the atomic increment is what keeps concurrent likes from being lost; the count a client gets back always includes its own like, and the web cache never lowers it (D-34).
+
+## D-33: A user switch does not cancel an addBottle in flight (corrects D-27)
+- Context: D-27 says `clearStore` and `resetStore` both cancel in-flight requests. In Apollo Client 4.3.5 they cancel queries only; a mutation keeps running. An `addBottle` sent as Anna that resolved after a switch to Mark prepended Anna's bottle to Mark's cached list and showed him the "Bottle added" toast. The data on the server was never wrong.
+- Decision: the form records the stored user id when it submits. The mutation's cache `update`, the form reset, the toast and the error display run only if the stored user is still the same. D-27 stays the reset mechanism.
+- Alternatives: abort the mutation on a switch (the server may already have saved the bottle, so the result would just be lost); refetch `myBottles` after every add instead of prepending (against A12, and the refetch would still run as Mark).
+- Why: the bottle belongs to the user who submitted it, so only that user's view may show it.
+
+## D-34: The cached like count never goes down
+- Context: each `likeBottle` response carries an absolute `likesCount`. After two quick clicks the responses can arrive out of order, and Apollo writes them in arrival order, so a late lower count stayed on screen (5 in the database, 4 in the UI).
+- Decision: an `InMemoryCache` type policy merges `Bottle.likesCount` as `Math.max(existing, incoming)` (`apps/web/src/lib/apollo-cache.ts`). A failed like still rolls back, because Apollo drops its optimistic layer and the base count was never raised. Unit tests cover both without a network: the test replaces the HTTP link with one whose responses it sends itself, in any order or as a failure. They show the race (a plain cache ends at 4, this one at 5) and the rollback.
+- Alternatives: send likes one at a time (a queue, slower feedback); drop responses older than the latest one (needs request ordering on the client).
+- Why: likes only grow (D-1, no unlike), so the highest count seen is the newest. Trade-off: if the database is reseeded while a page is open, the lower count shows only after a reload or a user switch.
+
+## D-35: CORS_ORIGIN is required in production
+- Context: `main.ts` fell back to `http://localhost:3000` in every environment, unlike `DATABASE_URL` (D-18) and `NEXT_PUBLIC_API_URL` (D-26).
+- Decision: the same rule as those two: the localhost fallback only outside production; with `NODE_ENV=production` and no `CORS_ORIGIN` the api fails at start with "CORS_ORIGIN must be set when NODE_ENV is production".
+- Alternatives: keep the silent fallback (a deployed web app would get CORS errors with no hint why); always require it (adds a step to the local run flow).
+- Why: one rule for all three env values: local runs need no env file, and a misconfigured deploy fails loudly.

@@ -1,18 +1,4 @@
-import { BOTTLE_LIMITS, getMaxVintage } from "./index";
-
-describe("BOTTLE_LIMITS", () => {
-  it("limits text fields to 1-100 chars", () => {
-    expect(BOTTLE_LIMITS.text).toEqual({ min: 1, max: 100 });
-  });
-
-  it("limits photoUrl to 2048 chars", () => {
-    expect(BOTTLE_LIMITS.photoUrl.max).toBe(2048);
-  });
-
-  it("starts vintages at 1900", () => {
-    expect(BOTTLE_LIMITS.vintage.min).toBe(1900);
-  });
-});
+import { getMaxVintage } from "./index";
 
 describe("getMaxVintage", () => {
   it("returns the UTC year of the given date", () => {

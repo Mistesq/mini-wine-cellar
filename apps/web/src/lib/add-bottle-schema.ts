@@ -46,7 +46,7 @@ const photoUrlSchema = z
         error: `Photo URL must be at most ${BOTTLE_LIMITS.photoUrl.max} characters`,
       })
       .refine(hasDottedHostname, {
-        error: "Photo URL must use a full domain name, like example.com",
+        error: "Photo URL must be an https:// URL with a valid domain",
       })
       .refine(hasNoCredentials, {
         error: "Photo URL must not contain a username or password",
