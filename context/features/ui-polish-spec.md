@@ -9,7 +9,7 @@ Spec 7 (`spec/7-ui-polish`). Runs after spec 5 and BEFORE spec 6 (delivery), so 
 ### Demo data in the seed
 
 - `DatabaseSeeder` adds 5-6 demo bottles for Anna with fixed uuids (same style as the user ids), through `em.upsertMany(Bottle, ...)` keyed on `id`. A second `npm run db:seed` creates no duplicates and leaves bottles added through the UI untouched (only rows with the demo ids are written).
-- The bottles differ in vintage (spread across decades), region (several countries) and `likesCount` (0 to a two-digit number).
+- The bottles differ in vintage (spread across decades), region (several countries) and `likesCount` (0 to 5: only the owner can like, D-1).
 - Each demo bottle has an explicit `createdAt` in the past, one apart from the next, so their order is fixed and a bottle added through the UI always lands above them.
 - Photos only from sources that allow free use and hotlinking: Unsplash (`images.unsplash.com`, Unsplash License) or Wikimedia Commons (`upload.wikimedia.org`, public domain, CC0 or CC BY / CC BY-SA with attribution). Next to each URL in the code: the source page and the license (and author when the license asks for attribution).
 - Every photo URL passes our own validation: `https://`, no credentials, a hostname with a TLD, at most 2048 chars. One demo bottle has no photo, so the placeholder shows.

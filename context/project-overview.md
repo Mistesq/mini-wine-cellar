@@ -74,7 +74,10 @@ None.
 
 - One page (`/`): header with the app name and the user dropdown; below it the add-bottle form and the bottle list.
 - Mobile first. At 375px: one column, the form above the list, full-width cards, tap targets at least 44px. At 1280px: the form in a side column, the list as a responsive card grid.
-- shadcn/ui components (Button, Input, Label, Card, Select) on Tailwind; light theme, neutral palette with a wine-red accent.
+- shadcn/ui components (Button, Input, Label, Card, Select, Badge, Skeleton, Sonner) on Tailwind; light theme, neutral palette with a wine-red accent. Wine-glass icon next to the app name and as the favicon (`src/app/icon.svg`).
+- Card: photo, name, producer, vintage badge, region with a pin icon, like button with a short pop on each click (off under `prefers-reduced-motion`).
+- A "Bottle added" toast after a successful add; every error stays inline. Skeleton cards while the list loads, a "Try again" button when it fails.
+- Demo data: `npm run db:seed` gives Anna six demo bottles (D-29); Mark and Taras start empty to show the empty state.
 - Photo: plain `<img>` with a fixed aspect ratio and a placeholder when there is no URL or it fails to load. Biome's `noImgElement` is suppressed only at that element with a `biome-ignore` comment that gives the reason (photos come from arbitrary domains), never globally.
 - Validation messages under each field, shown on submit and then on change. Server errors appear as an inline alert above the form or on the card.
 - UI text in English.

@@ -2,6 +2,7 @@
 
 import { ApolloProvider } from "@apollo/client/react";
 import { type ReactNode, useEffect, useState } from "react";
+import { Toaster } from "@/components/ui/sonner";
 import { createApolloClient } from "@/lib/apollo-client";
 import { subscribeToCurrentUser } from "@/lib/current-user-store";
 
@@ -22,5 +23,10 @@ export function Providers({ children }: { children: ReactNode }) {
     [client],
   );
 
-  return <ApolloProvider client={client}>{children}</ApolloProvider>;
+  return (
+    <ApolloProvider client={client}>
+      {children}
+      <Toaster />
+    </ApolloProvider>
+  );
 }

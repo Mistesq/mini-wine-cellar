@@ -34,6 +34,13 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --animate-like-pop: like-pop 300ms ease-out;
+
+  @keyframes like-pop {
+    40% {
+      transform: scale(1.35);
+    }
+  }
 }
 
 :root {

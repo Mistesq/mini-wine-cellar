@@ -32,7 +32,7 @@ export function UserPicker() {
     >
       <SelectTrigger
         aria-label="Current user"
-        className="w-40 data-[size=default]:h-11 sm:w-48"
+        className="w-36 data-[size=default]:h-11 sm:w-48"
       >
         <SelectValue
           placeholder={loading ? "Loading users..." : "Choose a user"}

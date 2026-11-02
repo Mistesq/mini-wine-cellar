@@ -36,6 +36,10 @@ Spec 6 (`spec/6-delivery`). Runs after spec 7 (UI polish). Makes the repo ready 
 ## Notes
 
 - Take the screenshots with Playwright MCP (`browser_resize` to 375x812 and 1280x800) against the seeded app.
+- The like assumption goes where the reviewer sees it first: one or two sentences in the README section that describes the app, and as the FIRST item of `PR.md` Key decisions. Each user sees only their own bottles, so "one like per user" would keep the count at 0 or 1; a like is therefore a counter with an atomic increment. Link D-1 and D-30.
+- README "Photo credits" section: for every CC BY demo photo (`apps/api/src/seeders/demo-bottles.ts`, D-29), the author, the license with its link and the Commons source page. CC BY needs attribution the viewer can see, not only code comments.
+- Final cleanup: reword the spec 7 goal and the AGENTS.md note about `npm ls --all` so it lists every known invalid entry: `ajv-formats` (from `@hookform/resolvers`), `@apollo/server` (playground plugin peer, D-19) and `webpack` (`schema-utils` peer, see the D-20 item below).
+- Final cleanup: D-20 says npm added a root `webpack` 5.112, but the lockfile holds 5.106.2 (`npm ls --all` shows it invalid against the `schema-utils` peer `^5.112.0`). Correct it with a new short decision entry that points to D-20; never edit D-20 itself.
 - Screenshots and the video are taken after spec 7 is merged, on a fresh database: `docker compose down -v`, `docker compose up -d`, `npm run db:migrate`, `npm run db:seed`.
 - Ask the user for the `ANSWERS.md` texts at the start of the spec, so the PR is not blocked at the end.
 - The PR opens only after every spec is merged into `feat/wine-cellar` and pushed. Never merge into `main`, never force-push.

@@ -1,8 +1,9 @@
 "use client";
 
-import { WineIcon } from "lucide-react";
+import { MapPinIcon, WineIcon } from "lucide-react";
 import { useState } from "react";
 import { LikeButton } from "@/components/like-button";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -25,8 +26,14 @@ export function BottleCard({ bottle }: { bottle: Bottle }) {
           {bottle.producer}
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 break-words text-muted-foreground">
-        {bottle.vintage} · {bottle.region}
+      <CardContent className="flex flex-1 flex-col gap-2 text-muted-foreground">
+        <Badge variant="secondary">{bottle.vintage}</Badge>
+        <p className="flex items-start gap-1.5">
+          <MapPinIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
+          {/* wrap-anywhere, not break-words: only `anywhere` lowers min-content,
+              which sizes the auto grid column, so a long unbroken region wraps. */}
+          <span className="min-w-0 wrap-anywhere">{bottle.region}</span>
+        </p>
       </CardContent>
       <CardFooter>
         <LikeButton

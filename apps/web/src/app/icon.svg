@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- #8c1832 is --primary (oklch(0.42 0.15 15)): a favicon cannot read CSS variables. -->
+  <path fill="#8c1832" d="M8 3h16c.6 7.4-1.8 13-8 13S7.4 10.4 8 3Z" />
+  <rect fill="#8c1832" x="14.75" y="15" width="2.5" height="10" />
+  <rect fill="#8c1832" x="9.5" y="24.5" width="13" height="3" rx="1.5" />
+</svg>
