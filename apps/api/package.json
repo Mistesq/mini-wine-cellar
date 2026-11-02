@@ -1,8 +1,7 @@
 {
   "name": "api",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "description": "Mini Wine Cellar GraphQL API (NestJS, Apollo Server, MikroORM)",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {

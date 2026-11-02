@@ -15,27 +15,14 @@ import {
   type AddBottleFormValues,
   addBottleSchema,
 } from "@/lib/add-bottle-schema";
+import { getCurrentUserId } from "@/lib/current-user-store";
 import { getErrorMessage, getServerFieldErrors } from "@/lib/graphql-errors";
 
 const FIELDS = ["name", "producer", "vintage", "region", "photoUrl"] as const;
 
 export function AddBottleForm() {
   const [formError, setFormError] = useState<string | null>(null);
-  const [addBottle] = useMutation(ADD_BOTTLE_MUTATION, {
-    // Prepend instead of refetching myBottles: the list is newest first.
-    update(cache, { data }) {
-      const bottle = data?.addBottle;
-      if (!bottle) {
-        return;
-      }
-      cache.updateQuery({ query: MY_BOTTLES_QUERY }, (existing) => {
-        if (!existing) {
-          return;
-        }
-        return { myBottles: [bottle, ...existing.myBottles] };
-      });
-    },
-  });
+  const [addBottle] = useMutation(ADD_BOTTLE_MUTATION);
   const {
     register,
     handleSubmit,
@@ -49,11 +36,36 @@ export function AddBottleForm() {
 
   const onSubmit = async (input: AddBottleFormValues) => {
     setFormError(null);
+    // resetStore on a user switch does not cancel a mutation in flight (D-33),
+    // so a result that lands after a switch must not reach the new user's list.
+    const submittedBy = getCurrentUserId();
+    const isStale = () => getCurrentUserId() !== submittedBy;
     try {
-      await addBottle({ variables: { input } });
+      await addBottle({
+        variables: { input },
+        // Prepend instead of refetching myBottles: the list is newest first.
+        update(cache, { data }) {
+          const bottle = data?.addBottle;
+          if (!bottle || isStale()) {
+            return;
+          }
+          cache.updateQuery({ query: MY_BOTTLES_QUERY }, (existing) => {
+            if (!existing) {
+              return;
+            }
+            return { myBottles: [bottle, ...existing.myBottles] };
+          });
+        },
+      });
+      if (isStale()) {
+        return;
+      }
       reset();
       toast.success("Bottle added");
     } catch (error) {
+      if (isStale()) {
+        return;
+      }
       const fieldErrors = getServerFieldErrors(error, FIELDS);
       if (!fieldErrors) {
         setFormError(

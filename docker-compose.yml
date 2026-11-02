@@ -6,7 +6,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-wine}
       POSTGRES_DB: ${POSTGRES_DB:-wine_cellar}
     ports:
-      - "5432:5432"
+      # Loopback only: the default credentials are public in this repo.
+      - "127.0.0.1:5432:5432"
     volumes:
       # Postgres 18+ keeps data in a versioned subfolder, so the volume mounts the parent.
       - postgres-data:/var/lib/postgresql

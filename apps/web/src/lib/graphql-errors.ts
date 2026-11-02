@@ -26,9 +26,13 @@ export function getServerFieldErrors<Field extends string>(
 }
 
 // Server messages are already safe to show (formatError strips internals);
-// anything else is a network failure.
+// anything else is a network failure. UNAUTHENTICATED means the stored user is
+// gone (e.g. after a reseed), which the header's text would not tell a person.
 export function getErrorMessage(error: unknown, fallback: string): string {
   if (CombinedGraphQLErrors.is(error) && error.errors[0]) {
+    if (error.errors[0].extensions?.code === "UNAUTHENTICATED") {
+      return "Choose a user to open the cellar";
+    }
     return error.errors[0].message;
   }
   return fallback;

@@ -144,7 +144,7 @@ describe("addBottleSchema", () => {
     "https://cellar/a.jpg",
   ])("requires a full domain like the api: rejects %s", (photoUrl) => {
     expect(messagesFor({ ...VALID, photoUrl }, "photoUrl")).toEqual([
-      "Photo URL must use a full domain name, like example.com",
+      "Photo URL must be an https:// URL with a valid domain",
     ]);
   });
 

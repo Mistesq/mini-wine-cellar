@@ -19,9 +19,10 @@ const trim = ({ value }: { value: unknown }) =>
   typeof value === "string" ? value.trim() : value;
 
 // An empty optional field means "no photo", so @IsOptional skips it instead of IsUrl rejecting "".
+// GraphQL may also send null for the nullable field; both end up undefined, as the type says.
 const trimToUndefined = (params: { value: unknown }) => {
   const value = trim(params);
-  return value === "" ? undefined : value;
+  return value === "" || value === null ? undefined : value;
 };
 
 // @Max(getMaxVintage()) would freeze the year at boot; this reads it on every validation.
@@ -68,7 +69,7 @@ export class AddBottleInput {
   @IsUrl(
     // No credentials in the URL: the web renders it as an <img> for anyone who owns the bottle.
     { protocols: ["https"], require_protocol: true, disallow_auth: true },
-    { message: "photoUrl must be an https:// URL" },
+    { message: "Photo URL must be an https:// URL with a valid domain" },
   )
   @MaxLength(BOTTLE_LIMITS.photoUrl.max)
   photoUrl?: string;
