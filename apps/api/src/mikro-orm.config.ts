@@ -41,5 +41,8 @@ export default defineConfig({
   seeder: {
     path: "dist/seeders",
     pathTs: "src/seeders",
+    // The default glob imports every file in the folder, specs included,
+    // and a spec's `describe` crashes the seeder outside Jest.
+    glob: "*.seeder.{js,ts}",
   },
 });

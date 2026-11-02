@@ -16,7 +16,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Mini Wine Cellar",
-  description: "Keep track of the wine bottles you own",
+  description:
+    "Your personal wine cellar: keep a list of the bottles you own, add new ones in seconds and like your favorites.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

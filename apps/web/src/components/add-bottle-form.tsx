@@ -4,6 +4,7 @@ import { useMutation } from "@apollo/client/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type ReactNode, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -51,6 +52,7 @@ export function AddBottleForm() {
     try {
       await addBottle({ variables: { input } });
       reset();
+      toast.success("Bottle added");
     } catch (error) {
       const fieldErrors = getServerFieldErrors(error, FIELDS);
       if (!fieldErrors) {

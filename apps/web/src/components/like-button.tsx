@@ -1,7 +1,9 @@
 "use client";
 
 import { useApolloClient, useMutation } from "@apollo/client/react";
+import { cn } from "cn";
 import { HeartIcon } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { LIKE_BOTTLE_MUTATION } from "@/graphql/bottles";
 import { optimisticLike } from "@/lib/optimistic-like";
@@ -17,8 +19,12 @@ export function LikeButton({
 }) {
   const client = useApolloClient();
   const [likeBottle, { error }] = useMutation(LIKE_BOTTLE_MUTATION);
+  // Keys the heart, so each click remounts it and restarts the pop even while
+  // the previous one is still running.
+  const [pops, setPops] = useState(0);
 
   const like = () => {
+    setPops((count) => count + 1);
     // A function, so the count is read from the cache when Apollo records this
     // optimistic layer, not from props that may lag behind earlier clicks.
     // Apollo drops the layer on error, which rolls the count back.
@@ -40,7 +46,14 @@ export function LikeButton({
         aria-label={`Like ${bottleName}, ${likesCount} ${likesCount === 1 ? "like" : "likes"}`}
         onClick={like}
       >
-        <HeartIcon className="text-primary" aria-hidden />
+        <HeartIcon
+          key={pops}
+          className={cn(
+            "text-primary",
+            pops > 0 && "motion-safe:animate-like-pop",
+          )}
+          aria-hidden
+        />
         {likesCount}
       </Button>
       {error && (
