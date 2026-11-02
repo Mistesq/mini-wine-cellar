@@ -28,7 +28,7 @@ E. **Ownership.** Every bottle query and mutation is scoped to the user from the
 | `query users` | public | none | `[User!]!` (for the dropdown) | none |
 | `query myBottles` | `x-user-id` | none | `[Bottle!]!`, newest first | `UNAUTHENTICATED` |
 | `mutation addBottle(input: AddBottleInput!)` | `x-user-id` | name, producer, vintage, region, photoUrl? | `Bottle!` | `UNAUTHENTICATED`, `BAD_USER_INPUT` |
-| `mutation likeBottle(id: ID!)` | `x-user-id` | bottle id | `Bottle!` with the new `likesCount` | `UNAUTHENTICATED`, `NOT_FOUND` |
+| `mutation likeBottle(id: ID!)` | `x-user-id` | bottle id | `Bottle!` with the new `likesCount` | `UNAUTHENTICATED`, `NOT_FOUND`, `BAD_USER_INPUT` (id is not a uuid) |
 
 ## Data Model (rough draft)
 
@@ -39,29 +39,29 @@ E. **Ownership.** Every bottle query and mutation is scoped to the user from the
 
 ## Tech Stack
 
-npm workspaces monorepo (npm 11, Node `^22.13.0 || >=24.0.0` via root `engines`, the strictest range in the dependency tree (`@napi-rs/wasm-runtime` needs 22.13, `concurrently` needs 22, Jest 30 skips 23; D-16); tested on 24 and 26). Library versions for the planned items are checked at install time and recorded in `AGENTS.md`.
+npm workspaces monorepo (npm 11, Node `^22.13.0 || >=24.0.0` via root `engines`, the strictest range in the dependency tree (`@napi-rs/wasm-runtime` needs 22.13, `concurrently` needs 22, Jest 30 skips 23; D-16); tested on 24 and 26). Exact installed versions are recorded in `AGENTS.md`.
 
-| Area | Now | Planned |
-| --- | --- | --- |
-| Web (`apps/web`) | Next.js 16.4 App Router, React 19.3, Tailwind CSS 4.3, TypeScript 5.9, port 3000 | Apollo Client + GraphQL Codegen (reads `apps/api/schema.gql`), react-hook-form + Zod, shadcn/ui; calls the API through `NEXT_PUBLIC_API_URL` (specs 4-5) |
-| API (`apps/api`) | NestJS 11.2 on Express 5, TypeScript 6.0, CommonJS (Nest 12 is ESM-only, D-15) | Port 4000, GraphQL at `/graphql` via `@nestjs/graphql` + `@nestjs/apollo` (`ApolloDriver`, code-first, `autoSchemaFile: schema.gql`), CORS for `http://localhost:3000`, class-validator + global `ValidationPipe` (specs 1-3) |
-| Shared (`packages/shared`) | `packages/*` declared, empty | Validation limits and the vintage range used by both apps (spec 1) |
-| Database / ORM | PostgreSQL 18 via docker-compose; MikroORM 6.6 (D-15) | MikroORM with `@mikro-orm/nestjs` (request context), `@mikro-orm/migrations`, `@mikro-orm/seeder` (spec 2) |
-| Auth | none | Fake: `x-user-id` header, Nest guard puts the user into the GraphQL context, `@CurrentUser()` decorator (spec 3) |
-| Lint / format | Biome 2.4 (web); oxlint + Prettier (api) | One Biome at the root for all workspaces, `noExplicitAny: error`; oxlint and Prettier removed (spec 1) |
-| Tests | Jest 30 + ts-jest + supertest (api); none (web) | Jest in both apps, web via `next/jest` (not Vitest, the brief requires Jest) (spec 1) |
-| Root scripts | none (`test` is a failing placeholder) | `dev`, `lint`, `typecheck`, `test` via workspaces; typecheck runs each app's own TypeScript (spec 1) |
-| CI / deploy | none | none, local run only (see Assumptions) |
+| Area | Stack |
+| --- | --- |
+| Web (`apps/web`) | Next.js 16.4 App Router, React 19.3, Tailwind CSS 4.3, TypeScript 5.9, Apollo Client 4 + GraphQL Codegen (reads `apps/api/schema.gql`), react-hook-form + Zod 4, shadcn/ui with Sonner; calls the API through `NEXT_PUBLIC_API_URL`; port 3000 |
+| API (`apps/api`) | NestJS 11.2 on Express 5, TypeScript 6.0, CommonJS (Nest 12 is ESM-only, D-15); port 4000, GraphQL at `/graphql` via `@nestjs/graphql` + `@nestjs/apollo` 13 (`ApolloDriver`, code-first, `schema.gql`), CORS for `http://localhost:3000`, class-validator + global `ValidationPipe` |
+| Shared (`packages/shared`) | Validation limits and the vintage range used by both apps |
+| Database / ORM | PostgreSQL 18 via docker-compose; MikroORM 6.6 (D-15) with `@mikro-orm/nestjs` (request context), `@mikro-orm/migrations`, `@mikro-orm/seeder` |
+| Auth | Fake: `x-user-id` header, Nest guard puts the user into the GraphQL context, `@CurrentUser()` decorator |
+| Lint / format | One Biome 2.4 at the root for all workspaces, `noExplicitAny: error` |
+| Tests | Jest 30 in every workspace (ts-jest in api and shared, `next/jest` in web), unit only (A15) |
+| Root scripts | `dev` (`concurrently`), `lint`, `format`, `typecheck`, `test`, `build`, `db:migrate`, `db:seed`; typecheck runs each app's own TypeScript |
+| CI / deploy | none, local run only (A18) |
 
 ## Architecture Notes
 
 - **Request flow (api)**: Apollo -> `x-user-id` guard -> resolver (parse input, call service) -> service (business logic, MikroORM) -> Postgres. Resolvers hold no logic.
 - **Auth seam**: the guard is the only place that knows how a user is identified. It loads the user by `x-user-id` and puts it into the GraphQL context; resolvers read it through `@CurrentUser()`. Swapping to Cognito later replaces only the guard. `users` is the one public query.
-- **Ownership in the service layer**: `myBottles` filters by owner; `addBottle` sets owner from the context; `likeBottle` runs a conditional `UPDATE ... SET likes_count = likes_count + 1 WHERE id = ? AND owner_id = ? RETURNING *` and throws `NotFoundException` on 0 rows. One statement, so it is atomic and needs no check-then-update.
+- **Ownership in the service layer**: `myBottles` filters by owner; `addBottle` sets owner from the context; `likeBottle` runs a conditional `UPDATE ... SET likes_count = likes_count + 1 WHERE id = ? AND owner_id = ?` and throws `NotFoundException` on 0 rows. The increment is one statement, so it is atomic and needs no check-then-update; a second query then reads the row back, so the returned `likesCount` may already include likes that landed in between (D-32).
 - **Errors**: services throw Nest exceptions; `formatError` in `GraphQLModule` is the single place that maps them to GraphQL error codes and strips stack traces and internal messages.
 - **MikroORM**: a fresh `EntityManager` per request via `@mikro-orm/nestjs` request context. Schema changes only through migrations; users only through the seeder.
 - **Schema pipeline**: the api writes `apps/api/schema.gql` on start (code-first). Codegen in `apps/web` reads that file, not the running server, and generates typed documents. Both `schema.gql` and the generated code are committed, so typecheck works without a running API.
-- **Web data flow**: the cellar is client-rendered (the user id lives in the browser). An Apollo link adds `x-user-id`. `addBottle` prepends the result to the cached `myBottles`; `likeBottle` uses `optimisticResponse` (`likesCount + 1`) and Apollo rolls back on error. Switching users resets the Apollo store.
+- **Web data flow**: the cellar is client-rendered (the user id lives in the browser). An Apollo link adds `x-user-id`. `addBottle` prepends the result to the cached `myBottles`; `likeBottle` uses `optimisticResponse` (`likesCount + 1`) and Apollo rolls back on error; the cache keeps the highest `likesCount` it has seen, so responses that arrive out of order cannot lower it (D-34). Switching users resets the Apollo store; an `addBottle` still in flight is dropped on the client if the user changed (D-33).
 - **Shared package**: `packages/shared` is plain TypeScript with no runtime dependencies, built to CommonJS + `.d.ts` so both the CommonJS Nest app and Next.js can import it. The Zod schema (web) and the class-validator DTO (api) both read their limits from it. The build runs automatically (root `prepare` after `npm install`, plus `predev` / `pretest` / `pretypecheck` hooks), so nobody builds it by hand.
 - **Run flow (README)**: `npm install` -> `docker compose up -d` -> migration -> seed -> `npm run dev`. No other manual steps. `npm run dev` starts both apps in parallel with `concurrently`.
 - **Decision log**: non-obvious decisions live in `docs/decisions.md` (D-1, D-2, ...); `PR.md` links to it instead of repeating it.
@@ -100,7 +100,7 @@ Each spec ends with an "Optional (only if time is left)" section; those items ar
 
 ## Status
 
-Scaffold and AI harness only. No spec started.
+Complete. Specs 1-5 and 7 are merged into `feat/wine-cellar`; spec 6 (delivery) adds the README, `ANSWERS.md`, screenshots, the demo video and the open pull request `feat/wine-cellar -> main`.
 
 ## Assumptions
 

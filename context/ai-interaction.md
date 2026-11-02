@@ -56,19 +56,19 @@ Every spec gets its own branch from `feat/wine-cellar`, named **spec/<n>-<name>*
 
 <!-- /bootstrap adapts this section to the real test runner, config and mocking style. -->
 
-**api (`apps/api`)**: Jest 30 + ts-jest, Node environment. Config: `apps/api/jest.config.ts` (unit) and `apps/api/test/jest-e2e.json` (e2e).
+**api (`apps/api`)**: Jest 30 + ts-jest, Node environment. Config: `apps/api/jest.config.ts`.
 
 - **Scope: business logic and utilities.** Services, validation, pure helpers. Resolvers only for input mapping and error translation.
-- Unit tests sit next to the code as `*.spec.ts` under `src/`. e2e tests go in `test/*.e2e-spec.ts` and use supertest against the Nest app.
+- Unit tests sit next to the code as `*.spec.ts` under `src/`. There are no e2e tests (A15).
 - Keep unit tests true units: **no real database, network or auth**. Build the unit with `Test.createTestingModule(...)` from `@nestjs/testing` and replace collaborators with `{ provide: X, useValue: mock }`. Use `jest.fn()` / `jest.mock(...)` for modules.
 - Cover the happy path plus the expected failures (invalid input, not found, conflict, unauthorized).
 - Jest globals (`describe`, `it`, `expect`) are enabled through `types: ["jest"]` in `tsconfig.json`, so no imports are needed.
 
-**web (`apps/web`)**: Jest via `next/jest` (added in spec 1; the brief requires Jest, so not Vitest). Scope: helpers, Zod schemas, form logic. Co-located `*.test.ts`. No component/UI tests unless asked. Until spec 1 lands there is no runner.
+**web (`apps/web`)**: Jest via `next/jest` (the brief requires Jest, so not Vitest). Scope: helpers, Zod schemas, form logic. Co-located `*.test.ts`. No component/UI tests unless asked.
 
-**Shared (`packages/shared`)**: test the validation limits wherever spec 1 wires Jest for it.
+**Shared (`packages/shared`)**: test the validation limits (Jest + ts-jest, `src/**/*.test.ts`).
 
-Run the tests (`npm test -w api` now; root `npm test` after spec 1) and both typechecks before committing.
+Run `npm test` and `npm run typecheck` from the root before committing.
 
 ## Code Review
 

@@ -181,3 +181,33 @@ Non-obvious decisions, in the order they were made. Format and rules: Decisions 
 - Decision: keep D-1, a `likes_count` counter incremented atomically by `UPDATE ... SET likes_count = likes_count + 1`, with no toggle and no per-user record. With "one like per user" only the owner could ever like a bottle, so the count would always be 0 or 1 and the "like count" in the brief would mean nothing.
 - Alternatives: a `like` table with `unique (user_id, bottle_id)`, a toggle mutation, and the count computed as `count(*)` (or a counter kept in sync with it).
 - Why: a counter is the only reading in which "like count" is a real number when users see only their own bottles; the atomic increment keeps rapid clicks from being lost (D-1).
+
+## D-31: The root webpack is 5.106.2, not 5.112 (corrects D-20)
+- Context: D-20 says npm added a root `webpack` 5.112 as a peer while re-resolving the api subtree. The committed `package-lock.json` holds `webpack` 5.106.2 (pinned by `@nestjs/cli`), and `npm ls --all` marks it invalid against the `schema-utils` 4.8.1 peer `^5.112.0`, as D-19 already notes.
+- Decision: D-20 stays as written; the lockfile is the source of truth: `webpack` 5.106.2 with one known invalid peer. `npm ls --all` has exactly three known invalid entries: `ajv-formats` (optional peer of `@hookform/resolvers`), `@apollo/server` (D-19) and `webpack`.
+- Alternatives: add `webpack` ^5.112 to the api devDependencies (bumps a dependency of the Nest CLI only to silence `npm ls`); an override for `@nestjs/cli` (crosses the version the CLI pins).
+- Why: `webpack` and `schema-utils` load only in the Nest CLI's webpack build mode, which `nest-cli.json` does not use, so the invalid peer changes nothing at build or run time.
+
+## D-32: likeBottle is one atomic UPDATE plus a separate read (corrects D-1)
+- Context: D-1 and the project overview described `likeBottle` as one statement (`UPDATE ... RETURNING *`). The service runs the conditional `UPDATE` through `nativeUpdate` and then reads the row back with a second query, without a transaction. The read used `findOneOrFail`, whose MikroORM `NotFoundError` would reach the client as `INTERNAL_SERVER_ERROR`.
+- Decision: keep the two queries and describe them as they are. The increment stays one conditional `UPDATE`, so it is atomic and owner-scoped (D-1, D-2 hold). The read is `findOne`, and a missing row throws `NotFoundException`, the same as a failed update. The returned `likesCount` may already include likes that landed between the two queries.
+- Alternatives: `UPDATE ... RETURNING *` as raw SQL with a manual entity mapping (loses MikroORM's typed filter and mapping); a transaction around both queries (one more round trip, and the count is stale as soon as it commits anyway).
+- Why: the atomic increment is what keeps concurrent likes from being lost; the count a client gets back always includes its own like, and the web cache never lowers it (D-34).
+
+## D-33: A user switch does not cancel an addBottle in flight (corrects D-27)
+- Context: D-27 says `clearStore` and `resetStore` both cancel in-flight requests. In Apollo Client 4.3.5 they cancel queries only; a mutation keeps running. An `addBottle` sent as Anna that resolved after a switch to Mark prepended Anna's bottle to Mark's cached list and showed him the "Bottle added" toast. The data on the server was never wrong.
+- Decision: the form records the stored user id when it submits. The mutation's cache `update`, the form reset, the toast and the error display run only if the stored user is still the same. D-27 stays the reset mechanism.
+- Alternatives: abort the mutation on a switch (the server may already have saved the bottle, so the result would just be lost); refetch `myBottles` after every add instead of prepending (against A12, and the refetch would still run as Mark).
+- Why: the bottle belongs to the user who submitted it, so only that user's view may show it.
+
+## D-34: The cached like count never goes down
+- Context: each `likeBottle` response carries an absolute `likesCount`. After two quick clicks the responses can arrive out of order, and Apollo writes them in arrival order, so a late lower count stayed on screen (5 in the database, 4 in the UI).
+- Decision: an `InMemoryCache` type policy merges `Bottle.likesCount` as `Math.max(existing, incoming)` (`apps/web/src/lib/apollo-cache.ts`). A failed like still rolls back, because Apollo drops its optimistic layer and the base count was never raised. Unit tests reproduce the race (a plain cache ends at 4, this one at 5) and the rollback, with a link the test answers by hand.
+- Alternatives: send likes one at a time (a queue, slower feedback); drop responses older than the latest one (needs request ordering on the client).
+- Why: likes only grow (D-1, no unlike), so the highest count seen is the newest. Trade-off: if the database is reseeded while a page is open, the lower count shows only after a reload or a user switch.
+
+## D-35: CORS_ORIGIN is required in production
+- Context: `main.ts` fell back to `http://localhost:3000` in every environment, unlike `DATABASE_URL` (D-18) and `NEXT_PUBLIC_API_URL` (D-26).
+- Decision: the same rule as those two: the localhost fallback only outside production; with `NODE_ENV=production` and no `CORS_ORIGIN` the api fails at start with "CORS_ORIGIN must be set when NODE_ENV is production".
+- Alternatives: keep the silent fallback (a deployed web app would get CORS errors with no hint why); always require it (adds a step to the local run flow).
+- Why: one rule for all three env values: local runs need no env file, and a misconfigured deploy fails loudly.

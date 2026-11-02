@@ -19,11 +19,11 @@ Run everything from the repo root. `packages/shared` is built automatically (`pr
 
 - **Dev (both apps)**: `npm run dev` (`concurrently`: api on 4000, web on 3000)
 - **Dev (one app)**: `npm run start:dev -w api` / `npm run dev -w web`
-- **Build**: `npm run build`
+- **Build**: `npm run build` (needs `apps/web/.env.local` copied from `.env.example`: a production build without `NEXT_PUBLIC_API_URL` fails on purpose, D-26)
 - **Lint**: `npm run lint` (Biome, root only; workspaces have no lint script)
 - **Format**: `npm run format` (Biome `check --write`, root only)
 - **Typecheck**: `npm run typecheck` (each workspace runs its own `tsc`; web runs `next typegen` first)
 - **Test**: `npm test` (Jest in every workspace; api `src/**/*.spec.ts`, web and shared `src/**/*.test.ts`)
 - **Test (one workspace)**: `npm test -w api` / `npm test -w web` / `npm test -w @mini-wine-cellar/shared`; watch: `npm run test:watch -w api`
 - **Codegen (web)**: `npm run codegen -w web` (reads `apps/api/schema.gql`, writes `apps/web/src/gql/`; rerun after the api schema changes)
-- **DB**: `docker compose up -d` (Postgres 18 on 5432), `docker compose ps` for health; MikroORM migrations come in spec 2
+- **DB**: `docker compose up -d` (Postgres 18 on 5432), `docker compose ps` for health; `npm run db:migrate`, `npm run db:seed` (users + Anna's demo bottles, rerun resets them); new migration: `npm run migration:create -w api`

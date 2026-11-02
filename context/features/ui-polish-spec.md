@@ -44,7 +44,7 @@ Spec 7 (`spec/7-ui-polish`). Runs after spec 5 and BEFORE spec 6 (delivery), so 
 
 ### Packages and docs
 
-- After every `shadcn add` / `npm install`: `npm run format`, then `npm ls --all` shows no missing or invalid packages except the known `ajv-formats` one (see `AGENTS.md`). With `legacy-peer-deps`, add any peer a new package needs to `apps/web/package.json` yourself.
+- After every `shadcn add` / `npm install`: `npm run format`, then `npm ls --all` shows no missing packages, and the only invalid ones are the three known entries: `ajv-formats` (optional peer of `@hookform/resolvers`), `@apollo/server` (peer of the playground plugin, D-19) and `webpack` (peer of `schema-utils`, D-31); see `AGENTS.md`. With `legacy-peer-deps`, add any peer a new package needs to `apps/web/package.json` yourself.
 - `AGENTS.md`: record the new packages and versions (sonner, anything `shadcn add` installs) and any API note worth keeping.
 - `context/project-overview.md`: UI / UX section mentions the toast, the card details and the demo data.
 
@@ -81,7 +81,7 @@ Use Context7 for the installed shadcn CLI, Sonner, lucide-react, Tailwind CSS 4 
 6. Throttle the network (or slow the api): skeleton cards show while loading. Stop the api and reload: the error with "Try again"; start the api and click it: the list loads
 7. Browser tab shows the wine-glass favicon and the title "Mini Wine Cellar"; the page source has the description meta
 8. Screenshots through Playwright MCP at 375x812 and 1280x800: Anna with the list, Mark with the empty state, the form with validation errors. Show them to the user in the chat before `/feature complete` (not committed; spec 6 takes the README ones)
-9. `npm run lint && npm run typecheck && npm test && npm run build` from the root: all green; `npm ls --all` clean apart from the known `ajv-formats` entry
+9. `npm run lint && npm run typecheck && npm test && npm run build` from the root: all green; `npm ls --all` clean apart from the three known invalid entries (`ajv-formats`, `@apollo/server`, `webpack`)
 ## References
 
 - shadcn Badge: https://ui.shadcn.com/docs/components/badge
