@@ -100,7 +100,7 @@ The api writes `apps/api/schema.gql` on every dev start. Both the schema and the
 - `query users` is the only public operation: the dropdown needs it before anyone is "logged in".
 - Every other operation goes through `UserIdGuard` (`apps/api/src/auth/user-id.guard.ts`). It reads `x-user-id`, loads the user and puts it into the GraphQL context; a missing, malformed or unknown id is `UNAUTHENTICATED`. Resolvers read the user through `@CurrentUser()`, and the guard is the only place that knows how a user is identified, so real auth (for example Cognito) would replace only the guard ([D-3](docs/decisions.md#d-3-the-guard-is-the-only-place-that-knows-how-a-user-is-identified)).
 - `myBottles` filters by the current user, and `addBottle` takes the owner from the context, never from the input.
-- `likeBottle` is one conditional `UPDATE ... WHERE id = ? AND owner_id = ?`. Another user's bottle and a missing id both return `NOT_FOUND`, so the response never reveals that someone else's id exists ([D-2](docs/decisions.md#d-2-another-users-bottle-returns-notfound-not-forbidden)).
+- `likeBottle` is one conditional `UPDATE ... WHERE id = ? AND owner_id = ?`, then a separate query reads the row back for the response ([D-32](docs/decisions.md#d-32-likebottle-is-one-atomic-update-plus-a-separate-read-corrects-d-1)). Another user's bottle and a missing id both return `NOT_FOUND`, so the response never reveals that someone else's id exists ([D-2](docs/decisions.md#d-2-another-users-bottle-returns-notfound-not-forbidden)).
 - There is no edit or delete: the like is the only change to an existing bottle.
 
 ## Project layout
@@ -123,7 +123,7 @@ apps/
     src/lib/              Apollo client, Zod schema, user store, helpers
 packages/
   shared/                 validation limits used by both apps
-docs/                     decisions, screenshots, demo video
+docs/                     decisions, screenshots, demo GIF
 context/                  project overview, coding standards, specs
 .claude/                  Claude Code skills, agents and settings
 ```
@@ -136,7 +136,7 @@ Non-obvious choices, each with its context, alternatives and reason, are in [doc
 
 I built the app with Claude Code on top of my own harness, which lives in the repo. `.claude/` holds the skills I call as slash commands (`/specs` turns the brief into an overview and specs, `/feature` runs one spec from load to merge, `/cleanup` checks housekeeping), the `code-scanner` review agent, and `settings.json` with the allowed commands, the enabled MCP servers (Context7 for current library docs, Playwright for the browser) and deny rules for reading `.env` files with the Read tool. `context/` holds what the AI reads before every task: `project-overview.md` (the problem, features, GraphQL contract, data model and assumptions), `coding-standards.md` and `ai-interaction.md` (code style, git workflow and working rules), the specs in `context/features/`, and `current-feature.md`, the working file of the spec in progress. `CLAUDE.md` and `AGENTS.md` record the installed versions, because several libraries here are newer than the model's training data.
 
-The work went from the brief to `project-overview.md`, then to seven small specs, each with requirements, notes and testing steps. Every spec ran through one `/feature` loop on its own branch: `load` turned it into a checklist, `start` implemented it, `test` added unit tests for the logic, and `review` compared the result with the plan. Before each merge I ran a code review and the `code-scanner` agent, fixed the findings, and ran lint, typecheck, tests and build. `complete` then merged the branch into `feat/wine-cellar` with `--no-ff`, so each spec is visible in the history.
+The work went from the brief to `project-overview.md`, then to seven small specs, each with requirements, notes and testing steps. Every spec ran through one `/feature` loop on its own branch: `load` turned it into a checklist, `start` implemented it, `test` added unit tests for the logic, and `review` compared the result with the plan. Every spec got a code review, every spec that changed application code also got a `code-scanner` pass, and the whole diff went through `code-scanner` once more before the PR; I fixed the findings and ran lint, typecheck, tests and build before each merge. `complete` then merged the branch into `feat/wine-cellar` with `--no-ff`, so each spec is visible in the history.
 
 Each non-obvious decision went into `docs/decisions.md` when its spec was completed, so the reasoning stays next to the code instead of in chat history.
 

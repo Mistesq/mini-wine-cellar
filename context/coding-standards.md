@@ -115,6 +115,7 @@ Run the formatter and don't hand-format: `npm run format` (one root Biome config
 - Why: the reason in 1-2 sentences
 ```
 
+- When a later entry corrects, replaces or completes an earlier one, the earlier entry gets one line right under its heading, `- Status: <corrected by / replaced by / ...> [D-<n>](#anchor).`, and its text stays as it was.
 - `PR.md` "Key decisions" links to `docs/decisions.md` and does not repeat it.
 
 ## Errors
