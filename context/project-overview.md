@@ -88,7 +88,10 @@ Ordered specs in `context/features/`. Branch per spec: `spec/<n>-<name>` from `f
 3. `api-phase-2-spec.md` (`spec/3-api-graphql`): Apollo GraphQL at `/graphql`, CORS, `ValidationPipe`, `formatError`, `x-user-id` guard and `@CurrentUser()`, resolvers, `schema.gql`. Depends on: 2.
 4. `web-phase-1-spec.md` (`spec/4-web-foundation`): shadcn/ui, Apollo Client with the `x-user-id` link, Codegen, stored user and the header picker. Depends on: 3.
 5. `web-phase-2-spec.md` (`spec/5-web-cellar`): add-bottle form (Zod + react-hook-form), bottle list with states, optimistic like, responsive layout. Depends on: 4.
-6. `delivery-phase-1-spec.md` (`spec/6-delivery`): README with "How I worked", `ANSWERS.md`, screenshots at 375px and 1280px, code-scanner + `/cleanup check`, full checks, `PR.md` and the open PR. Depends on: 5.
+7. `ui-polish-spec.md` (`spec/7-ui-polish`), runs before spec 6: demo bottles for Anna in the seed (fixed ids, upsert, free-license hotlinkable photos), card with vintage badge, region icon and animated like, "Bottle added" toast (Sonner), header icon and `icon.svg` favicon, skeleton cards and a retry button. Depends on: 5.
+6. `delivery-phase-1-spec.md` (`spec/6-delivery`): README with "How I worked", `ANSWERS.md`, screenshots at 375px and 1280px, code-scanner + `/cleanup check`, full checks, `PR.md` and the open PR. Depends on: 7.
+
+Spec 7 was added after spec 5 and keeps its number, but runs before spec 6, so the delivery screenshots show the polished UI.
 
 Each spec ends with an "Optional (only if time is left)" section; those items are not required for `/feature complete`.
 
