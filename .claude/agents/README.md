@@ -7,7 +7,7 @@ Included:
 - **code-scanner**: general pass for security, correctness, performance and quality on the code you give it. It reads `CLAUDE.md` and `context/coding-standards.md` for the stack and standards, so it works in any project without editing. Usage:
 
   ```text
-  Run git diff main --name-only, then use the code-scanner subagent on those files against the goals in @context/current-feature.md.
+  Run git diff feat/wine-cellar --name-only, then use the code-scanner subagent on those files against the goals in @context/current-feature.md.
   ```
 
 Worth adding per project (sharper scope = fewer false positives):

@@ -33,7 +33,7 @@ Execute the requested action: $ARGUMENTS
 | `review`   | Check goals met (plan vs actual), code quality, scope creep     |
 | `test`     | Add tests for testable business logic and utilities             |
 | `explain`  | Document what changed and why                                   |
-| `complete` | Commit, push, merge, reset                                      |
+| `complete` | Commit, merge into `feat/wine-cellar`, reset, push              |
 
 See [actions/](actions/) for detailed instructions.
 

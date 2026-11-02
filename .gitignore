@@ -6,6 +6,9 @@ coverage/
 .env.*
 !.env.example
 *.log
+*.tsbuildinfo
 
 # AI harness
 CLAUDE.local.md
+PR.md
+.playwright-mcp/

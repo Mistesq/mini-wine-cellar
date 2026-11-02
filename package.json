@@ -2,16 +2,35 @@
   "name": "mini-wine-cellar",
   "private": true,
   "workspaces": [
-    "apps/*",
-    "packages/*"
+    "packages/*",
+    "apps/*"
   ],
   "version": "1.0.0",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build:shared": "npm run build -w @mini-wine-cellar/shared",
+    "prepare": "npm run build:shared",
+    "predev": "npm run build:shared",
+    "dev": "concurrently -n api,web -c blue,magenta \"npm run start:dev -w api\" \"npm run dev -w web\"",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "pretypecheck": "npm run build:shared",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "pretest": "npm run build:shared",
+    "test": "npm run test --workspaces --if-present",
+    "db:migrate": "npm run db:migrate -w api",
+    "db:seed": "npm run db:seed -w api"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": ""
+  "engines": {
+    "node": "^22.13.0 || >=24.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.2",
+    "concurrently": "^10.0.6"
+  },
+  "overrides": {
+    "@nestjs/graphql": {
+      "@graphql-tools/utils": "^12.1.0"
+    }
+  }
 }

@@ -1,7 +1,7 @@
 # Review Action
 
 1. Read current-feature.md to understand the goals
-2. Review all code changes made for this feature (`git diff main`)
+2. Review all code changes made for this feature (`git diff feat/wine-cellar`)
 3. Check for:
    - ✅ Goals met
    - ❌ Goals missing or incomplete

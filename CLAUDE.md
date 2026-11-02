@@ -1,8 +1,8 @@
 @AGENTS.md
 
-# {{PROJECT_NAME}}
+# Mini Wine Cellar
 
-{{ONE_LINE_DESCRIPTION}}
+A small full-stack app where each user keeps a personal list of wine bottles, adds new ones and likes the ones they enjoy. Repo: npm workspaces monorepo with a NestJS API (`apps/api`), a Next.js web app (`apps/web`) and shared validation limits (`packages/shared`).
 
 ## Context Files
 
@@ -15,34 +15,15 @@ Read the following to get the full context of the project:
 
 ## Commands
 
-<!-- /bootstrap rewrites this list from the real package.json scripts. -->
+Run everything from the repo root. `packages/shared` is built automatically (`prepare` after `npm install`, plus `predev`, `pretypecheck`, `pretest`; `npm run build` builds it first through the workspace order); build it by hand only when running a single workspace script: `npm run build:shared`.
 
-- **Dev server**: `npm run dev`
-- **Build**: `npm run build`
-- **Lint**: `npm run lint`
-- **Typecheck**: `npm run typecheck` (or `npx tsc --noEmit`)
-- **Test (once)**: `npm test`
-- **Test (watch)**: `npm run test:watch`
-
-<!--
-  DELETE THIS BLOCK IF THE PROJECT HAS NO DATABASE / MCP DB ACCESS.
-  Keep it (and adjust the provider name) when the AI can reach the DB
-  through an MCP server. Concrete project/branch IDs are secrets and
-  live in CLAUDE.local.md (gitignored; copy CLAUDE.local.md.example).
--->
-
-## Database Access Rules (via MCP)
-
-Concrete project/branch identifiers are machine/account-specific and live in
-`CLAUDE.local.md` (gitignored). The rules below reference branches by role;
-resolve the actual IDs from that file.
-
-- Default every query/operation to the **development** branch. Always pass the
-  development branch id explicitly. Never rely on the default branch, since the
-  default is production.
-- **NEVER** touch the **production** branch (no reads, writes, schema changes,
-  or migrations) unless I explicitly name "production" in my request.
-- Never run destructive SQL (`DROP`, `DELETE`, `TRUNCATE`, unconfirmed
-  `UPDATE`/`INSERT`) or any branch/project deletion without asking me first,
-  even on development.
-- When you run a DB operation, state which branch you used.
+- **Dev (both apps)**: `npm run dev` (`concurrently`: api on 4000, web on 3000)
+- **Dev (one app)**: `npm run start:dev -w api` / `npm run dev -w web`
+- **Build**: `npm run build` (needs `apps/web/.env.local` copied from `.env.example`: a production build without `NEXT_PUBLIC_API_URL` fails on purpose, D-26)
+- **Lint**: `npm run lint` (Biome, root only; workspaces have no lint script)
+- **Format**: `npm run format` (Biome `check --write`, root only)
+- **Typecheck**: `npm run typecheck` (each workspace runs its own `tsc`; web runs `next typegen` first)
+- **Test**: `npm test` (Jest in every workspace; api `src/**/*.spec.ts`, web and shared `src/**/*.test.ts`)
+- **Test (one workspace)**: `npm test -w api` / `npm test -w web` / `npm test -w @mini-wine-cellar/shared`; watch: `npm run test:watch -w api`
+- **Codegen (web)**: `npm run codegen -w web` (reads `apps/api/schema.gql`, writes `apps/web/src/gql/`; rerun after the api schema changes)
+- **DB**: `docker compose up -d` (Postgres 18 on 5432), `docker compose ps` for health; `npm run db:migrate`, `npm run db:seed` (users + Anna's demo bottles, rerun resets them); new migration: `npm run migration:create -w api`

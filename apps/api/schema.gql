@@ -1,0 +1,42 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input AddBottleInput {
+  name: String!
+  photoUrl: String
+  producer: String!
+  region: String!
+  vintage: Int!
+}
+
+type Bottle {
+  createdAt: DateTime!
+  id: ID!
+  likesCount: Int!
+  name: String!
+  photoUrl: String
+  producer: String!
+  region: String!
+  vintage: Int!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Mutation {
+  addBottle(input: AddBottleInput!): Bottle!
+  likeBottle(id: ID!): Bottle!
+}
+
+type Query {
+  myBottles: [Bottle!]!
+  users: [User!]!
+}
+
+type User {
+  id: ID!
+  name: String!
+}
